@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      @page {
+        size: <?!= tipoRecibo.formatoPapel === 'A4' ? 'A4' : 'Letter' ?>;
+        margin: 16mm;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: #1b1b1b; font-family: Arial, sans-serif; font-size: 11pt; }
+      .encabezado { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 3px solid <?!= tipoRecibo.colorPrincipal ?>; }
+      .logotipo { max-width: 170px; max-height: 82px; object-fit: contain; }
+      .empresa { margin: 8px 0 0; color: <?!= tipoRecibo.colorPrincipal ?>; font-size: 20pt; }
+      .folio { text-align: right; }
+      .folio strong { font-size: 12pt; }
+      .contenido { margin: 34px 0; white-space: pre-line; line-height: 1.75; }
+      .firma { margin-top: 42px; text-align: center; page-break-inside: avoid; }
+      .firma img { display: block; width: 260px; max-height: 115px; object-fit: contain; margin: 0 auto 5px; }
+      .linea-firma { width: 300px; max-width: 80%; margin: 0 auto 5px; border-top: 1px solid #333; }
+      .evidencia { margin-top: 28px; padding-top: 14px; border-top: 1px solid #ccc; text-align: center; page-break-inside: avoid; }
+      .evidencia img { max-width: 420px; max-height: 270px; object-fit: contain; }
+      .pie { margin-top: 22px; color: #555; font-size: 8pt; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <header class="encabezado">
+      <div>
+        <? if (logotipoUrlDatos) { ?>
+          <img class="logotipo" src="<?= logotipoUrlDatos ?>" alt="Logotipo" />
+        <? } ?>
+        <h1 class="empresa"><?= tipoRecibo.nombreEmpresa ?></h1>
+      </div>
+      <div class="folio">
+        <strong><?= recibo.folio ?></strong><br />
+        <span><?= fechaPagoFormateada ?></span>
+      </div>
+    </header>
+
+    <main>
+      <div class="contenido"><?= textoPrincipal ?></div>
+      <section class="firma">
+        <img src="<?= firmaUrlDatos ?>" alt="Firma" />
+        <div class="linea-firma"></div>
+        <strong><?= recibo.cliente ?></strong><br />
+        <span>Firma de conformidad</span>
+      </section>
+      <section class="evidencia">
+        <p><strong>Evidencia de identificación presencial</strong></p>
+        <img src="<?= fotografiaUrlDatos ?>" alt="Identificación o rostro" />
+      </section>
+    </main>
+
+    <footer class="pie">
+      Recibo generado el <?= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm') ?>.
+    </footer>
+  </body>
+</html>
