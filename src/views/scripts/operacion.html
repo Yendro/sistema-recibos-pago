@@ -37,6 +37,9 @@
     document.getElementById("paginaSiguiente").addEventListener("click", () => cargarHistorial(estadoOperacion.historial.pagina + 1));
     document.getElementById("botonCancelarCorreo").addEventListener("click", () => document.getElementById("dialogoCorreo").close());
     document.getElementById("botonEnviarCorreo").addEventListener("click", enviarCorreoSeleccionado);
+    document.getElementById("dialogoCorreo").addEventListener("cancel", (evento) => {
+      if (evento.currentTarget.getAttribute("aria-busy") === "true") evento.preventDefault();
+    });
   }
 
   async function cargarDatosOperacion() {
@@ -525,6 +528,7 @@
 
   function abrirDialogoCorreo(identificadorRecibo) {
     identificadorReciboCorreo = identificadorRecibo;
+    establecerDialogoCorreoProcesando(false);
     const contenedor = document.getElementById("contactosCorreo");
     contenedor.replaceChildren();
     if (!estadoOperacion.contactos.length) {
@@ -545,10 +549,42 @@
     document.getElementById("dialogoCorreo").showModal();
   }
 
+  function mostrarEstadoEnvioCorreo(mensaje, esError = false) {
+    const estado = document.getElementById("estadoEnvioCorreo");
+    estado.replaceChildren(
+      crearIconoMaterial(esError ? "close" : "refresh"),
+      document.createTextNode(mensaje),
+    );
+    estado.classList.toggle("estado-error-local", esError);
+    estado.classList.remove("oculto");
+  }
+
+  function establecerDialogoCorreoProcesando(procesando) {
+    const dialogo = document.getElementById("dialogoCorreo");
+    const botonEnviar = document.getElementById("botonEnviarCorreo");
+    const botonCancelar = document.getElementById("botonCancelarCorreo");
+    dialogo.setAttribute("aria-busy", procesando ? "true" : "false");
+    botonEnviar.disabled = procesando;
+    botonCancelar.disabled = procesando;
+    document.querySelectorAll("#contactosCorreo input").forEach((casilla) => {
+      casilla.disabled = procesando;
+    });
+    botonEnviar.replaceChildren(
+      crearIconoMaterial(procesando ? "refresh" : "mail"),
+      document.createTextNode(procesando ? "Enviando…" : "Enviar PDF"),
+    );
+    botonEnviar.classList.toggle("procesando", procesando);
+    if (procesando) mostrarEstadoEnvioCorreo("Enviando el recibo por correo…");
+    else document.getElementById("estadoEnvioCorreo").classList.add("oculto");
+  }
+
   async function enviarCorreoSeleccionado() {
     const seleccionados = Array.from(document.querySelectorAll("#contactosCorreo input:checked")).map((elemento) => elemento.value);
-    if (!seleccionados.length) return mostrarMensaje("Selecciona al menos un contacto.", true);
-    mostrarCarga(true, "Enviando el PDF…");
+    if (!seleccionados.length) {
+      mostrarEstadoEnvioCorreo("Selecciona al menos un contacto.", true);
+      return;
+    }
+    establecerDialogoCorreoProcesando(true);
     try {
       const respuesta = await ejecutarServidor("enviarReciboPorCorreo", identificadorReciboCorreo, seleccionados);
       const recibo = exigirRespuestaExitosa(respuesta);
@@ -558,11 +594,11 @@
       renderizarResumen();
       renderizarHistorial();
       document.getElementById("dialogoCorreo").close();
+      establecerDialogoCorreoProcesando(false);
       mostrarMensaje(respuesta.mensaje);
     } catch (error) {
-      mostrarMensaje(error.message, true);
-    } finally {
-      mostrarCarga(false);
+      establecerDialogoCorreoProcesando(false);
+      mostrarEstadoEnvioCorreo(error.message, true);
     }
   }
 </script>
