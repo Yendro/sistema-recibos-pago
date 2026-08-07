@@ -36,7 +36,7 @@ const funcionesPublicasPermitidas = new Set([
   "doGet",
   "inicializarSistemaPruebas",
   "diagnosticarSistema",
-  "obtenerResumenInicio",
+  "obtenerDatosOperacion",
   "obtenerConfiguracionParaWeb",
   "guardarTipoRecibo",
   "guardarContacto",
@@ -84,11 +84,58 @@ archivosScriptsVista.forEach((rutaArchivo) => {
   validarJavaScript(coincidencia[1], rutaArchivo);
 });
 
+const rutaLayout = rutas.join(
+  directorioProyecto,
+  "src",
+  "views",
+  "layouts",
+  "aplicacion.html",
+);
+const contenidoLayout = sistemaArchivos.readFileSync(rutaLayout, "utf8");
+const vistasVerificables = ["operacion", "configuracion"];
+vistasVerificables.forEach((nombreVista) => {
+  const rutaPagina = rutas.join(
+    directorioProyecto,
+    "src",
+    "views",
+    "pages",
+    `${nombreVista}.html`,
+  );
+  const rutaScript = rutas.join(
+    directorioProyecto,
+    "src",
+    "views",
+    "scripts",
+    `${nombreVista}.html`,
+  );
+  const contenidoPagina = sistemaArchivos.readFileSync(rutaPagina, "utf8");
+  const contenidoScript = sistemaArchivos.readFileSync(rutaScript, "utf8");
+  const identificadores = new Set(
+    Array.from(
+      `${contenidoLayout}\n${contenidoPagina}`.matchAll(/\bid="([^"]+)"/g),
+      (coincidencia) => coincidencia[1],
+    ),
+  );
+  const referencias = Array.from(
+    contenidoScript.matchAll(/getElementById\(["']([^"']+)["']\)/g),
+    (coincidencia) => coincidencia[1],
+  );
+  referencias.forEach((identificador) => {
+    if (!identificadores.has(identificador)) {
+      errores.push(
+        `src/views/scripts/${nombreVista}.html: no existe el elemento #${identificador}.`,
+      );
+    }
+  });
+});
+
 const referenciasProhibidas = [
   "DocumentApp",
   "FormApp",
   "ANYONE_ANONYMOUS",
   "NOMBRE_HOJA_SOLICITUDES",
+  "DriveApp.getRootFolder",
+  "border-radius: 999",
 ];
 const archivosAplicacion = recorrerArchivos(
   rutas.join(directorioProyecto, "src"),
@@ -111,6 +158,14 @@ if (manifiesto.webapp?.access !== "MYSELF") {
 }
 if (manifiesto.webapp?.executeAs !== "USER_DEPLOYING") {
   errores.push("appsscript.json: la aplicación web debe ejecutarse como USER_DEPLOYING.");
+}
+
+const plantillaPdf = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "pdf", "recibo.html"),
+  "utf8",
+);
+if ((plantillaPdf.match(/src="<\?!=/g) || []).length < 3) {
+  errores.push("src/views/pdf/recibo.html: las imágenes deben evitar el escape contextual.");
 }
 
 if (errores.length) {
