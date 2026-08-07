@@ -1,5 +1,8 @@
 # Implementación del entorno de pruebas
 
+Esta guía conserva el procedimiento para un entorno aislado. Para realizar el
+corte definitivo consulta [Despliegue a producción](DESPLIEGUE_PRODUCCION.md).
+
 ## Advertencia
 
 Una rama de Git no separa un proyecto de Apps Script. No ejecutes `clasp push`

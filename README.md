@@ -1,55 +1,188 @@
 # Sistema de Recibos y Pagos
 
-Aplicación web de Google Apps Script para crear, firmar, documentar y enviar
-recibos sin utilizar Google Docs como motor de plantillas.
+Aplicación web de Google Apps Script para crear, firmar, documentar, enviar y
+consultar recibos sin utilizar Google Docs como motor de plantillas ni Google
+Sheets como fuente operativa.
 
-## Alcance actual
+El sistema está diseñado para una cuenta propietaria, operación de caja desde
+computadora o tableta y firma presencial con fotografía de evidencia.
 
-- Configuración de tipos de recibo y contactos desde la aplicación.
-- Logotipo, proveedor, prefijo, color y formato de papel por tipo.
-- Creación manual o masiva mediante una cuadrícula editable.
-- Firma directamente sobre la representación visual del recibo.
-- Captura obligatoria de identificación o evidencia presencial.
-- Generación directa de PDF y almacenamiento en Drive.
-- Envío del PDF a contactos previamente configurados.
-- Reporte general en Sheets como salida, no como fuente operativa.
-- Operación unificada sin recargar la aplicación entre captura, firma e historial.
-- Índice operativo para evitar recorridos completos de los archivos mensuales.
-- Tema claro de alto contraste con Material Symbols.
-- Eliminación protegida de recibos no enviados desde el historial.
+## Funcionalidades
 
-El módulo de solicitudes y la integración con Google Forms fueron retirados del
-alcance.
+- Configuración de tipos de recibo, empresas, proveedores, logotipos y contactos.
+- Captura manual o masiva mediante una cuadrícula editable.
+- Firma sobre la representación visual del recibo.
+- Fotografía obligatoria de identificación o evidencia presencial.
+- Generación de PDF en formato carta o A4.
+- Envío del PDF a contactos configurados.
+- Historial con búsqueda, filtros y paginación.
+- Eliminación protegida de recibos no enviados.
+- Reporte general derivado en Google Sheets.
+- Persistencia operativa en archivos JSON mensuales de Drive.
+- Índice operativo, caché de lecturas y bloqueo de escrituras concurrentes.
+- Interfaz responsive basada en Material Design 3 y Nautical Blues.
 
-## Rutas
+El módulo de solicitudes, Google Forms y las plantillas de Google Docs quedaron
+fuera del alcance actual.
 
-La misma implementación atiende las siguientes rutas:
+## Requisitos
+
+- Una cuenta de Google con acceso a Apps Script, Drive, Sheets y Mail.
+- [Node.js](https://nodejs.org/) y npm.
+- `clasp` instalado globalmente:
+
+  ```bash
+  npm install --global @google/clasp
+  ```
+
+- Un proyecto independiente y _standalone_ de Google Apps Script, creado dentro
+  de la carpeta de Drive donde se almacenarán las dependencias del sistema.
+
+## Instalación local
+
+1. Clona el repositorio y entra en su directorio:
+
+   ```bash
+   git clone URL_DEL_REPOSITORIO
+   cd sistema-recibos-pagos
+   ```
+
+2. Instala las dependencias y verifica el proyecto:
+
+   ```bash
+   npm ci
+   npm run verificar
+   ```
+
+3. Inicia sesión en Google:
+
+   ```bash
+   clasp login
+   ```
+
+4. Crea `.clasp.json` en la raíz. Este archivo es local y Git lo ignora:
+
+   ```json
+   {
+     "scriptId": "IDENTIFICADOR_DEL_PROYECTO_APPS_SCRIPT",
+     "rootDir": "",
+     "scriptExtensions": [".js", ".gs"],
+     "htmlExtensions": [".html"],
+     "jsonExtensions": [".json"],
+     "filePushOrder": [],
+     "skipSubdirectories": false
+   }
+   ```
+
+5. Confirma que el `scriptId` corresponde al entorno correcto y sube el código:
+
+   ```bash
+   clasp push
+   ```
+
+## Inicialización de Google Apps Script
+
+Desde el editor de Apps Script ejecuta una vez:
 
 ```text
-?ruta=operacion
-?ruta=configuracion
+inicializarSistemaPruebas()
 ```
 
-Las rutas anteriores redirigen temporalmente a `operacion` para facilitar la
-migración de Google Sites.
+Aunque conserva ese nombre por compatibilidad, la función es idempotente y sirve
+para instalaciones de prueba o producción. Solicitará permisos y creará:
 
-Consulta [la guía de implementación de pruebas](docs/IMPLEMENTACION_PRUEBAS.md)
-antes de ejecutar `clasp push`.
+```text
+Sistema Recibos Pagos/
+├── config/
+│   ├── configuracion.json
+│   ├── contactos.json
+│   └── tipos-recibo.json
+├── datos/
+│   ├── indice-recibos.json
+│   └── AAAA/recibos-AAAA-MM.json
+├── evidencias/AAAA/MM/
+├── logos/
+├── recibos/AAAA/MM/
+└── respaldos/
+```
 
-La [paleta para Google Sites](docs/PALETA_GOOGLE_SITES.md) documenta los colores
-de la aplicación y su uso recomendado en el sitio contenedor.
+También crea el archivo `Reporte General de Recibos` y registra todos los
+identificadores en las propiedades del script.
 
-## Verificación local
+Después ejecuta:
+
+```text
+diagnosticarSistema()
+```
+
+El resultado esperado debe incluir:
+
+```text
+inicializado: true
+versionEsperada: 4
+directorioRaizEnContenedor: true
+```
+
+No se necesitan triggers, Google Forms ni un proyecto vinculado a Sheets.
+
+## Implementación de la aplicación web
+
+1. Abre **Implementar > Nueva implementación** en Apps Script.
+2. Selecciona **Aplicación web**.
+3. Configura **Ejecutar como: yo**.
+4. Configura el acceso para la cuenta propietaria.
+5. Implementa y conserva la URL terminada en `/exec`.
+
+Rutas disponibles:
+
+```text
+URL_IMPLEMENTACION/exec?ruta=operacion
+URL_IMPLEMENTACION/exec?ruta=configuracion
+```
+
+Ambas rutas pueden insertarse como páginas de ancho completo en Google Sites.
+El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
+
+## Primera configuración
+
+1. Abre `?ruta=configuracion`.
+2. Edita el tipo general o crea los tipos necesarios.
+3. Define empresa, proveedor, prefijo, papel, color y logotipo.
+4. Registra los contactos de envío.
+5. Abre `?ruta=operacion` y realiza una prueba completa:
+   captura, firma, fotografía, PDF, correo y reporte.
+
+## Actualización de una instalación
 
 ```bash
+git pull
+npm ci
 npm run verificar
+clasp push
 ```
 
-Esta comprobación valida la sintaxis del servidor y del navegador, la API
-pública, el manifiesto, la inserción segura de imágenes en el PDF y la ausencia
-de referencias a Google Docs, Forms, acceso anónimo y la raíz de Mi unidad.
+Después crea una versión nueva dentro de la implementación existente de Apps
+Script. La URL se mantiene cuando se edita la misma implementación.
 
-## Estructura
+Ejecuta nuevamente `inicializarSistemaPruebas()` solo cuando el diagnóstico
+indique una versión de estructura anterior o falten propiedades. La función no
+duplica los recursos existentes.
+
+## Desarrollo
+
+- Ejecuta `npm run verificar` antes de cada commit.
+- Usa nombres completos en español latinoamericano para el código propio.
+- Conserva nombres convencionales para carpetas como `app`, `config`,
+  `repositories`, `services` y `views`.
+- Utiliza Conventional Commits, por ejemplo:
+
+  ```text
+  feat(recibos): agregar nueva capacidad
+  fix(pdf): corregir conversión de imágenes
+  docs(proyecto): actualizar guía de instalación
+  ```
+
+## Estructura del código
 
 ```text
 src/
@@ -61,6 +194,27 @@ src/
 └── views/           Layout, páginas, scripts, estilos, PDF y correo
 ```
 
-El código propio utiliza nombres completos en español. Se conservan en inglés
-únicamente los nombres convencionales de carpetas y los puntos de entrada
-exigidos por Apps Script, como `doGet`.
+## Documentación
+
+- [Índice de documentación](docs/README.md)
+- [Arquitectura y almacenamiento](docs/ARQUITECTURA.md)
+- [Análisis de la fase 2](docs/ANALISIS_FASE_2.md)
+- [Despliegue a producción](docs/DESPLIEGUE_PRODUCCION.md)
+- [Implementación y pruebas funcionales](docs/IMPLEMENTACION_PRUEBAS.md)
+- [Paleta para Google Sites](docs/PALETA_GOOGLE_SITES.md)
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
+
+## Seguridad y límites
+
+- La Web App se ejecuta como la cuenta que la implementa y el manifiesto limita
+  el acceso a esa cuenta.
+- Fotografías, firmas y recibos contienen información sensible y deben conservar
+  permisos privados en Drive.
+- Sheets es un reporte derivado; la fuente operativa son los JSON de Drive.
+- La carpeta `respaldos/` ya se crea, pero los respaldos versionados automáticos
+  pertenecen a una fase posterior de robustecimiento.
+
+## Licencia
+
+Consulta [LICENSE](LICENSE).
