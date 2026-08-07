@@ -20,6 +20,13 @@ function limpiarNombreArchivo_(valor) {
     .replace(/^-|-$/g, "");
 }
 
+function extraerIdentificadorDrive_(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) return "";
+  const coincidencia = texto.match(/[-\w]{20,}/);
+  return coincidencia ? coincidencia[0] : "";
+}
+
 function obtenerFechaIso_(fecha) {
   return Utilities.formatDate(
     fecha instanceof Date ? fecha : new Date(fecha),

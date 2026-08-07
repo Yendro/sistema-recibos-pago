@@ -8,7 +8,13 @@ function obtenerConfiguracionCompleta_() {
     };
   }
 
-  return {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const contenidoMemoriaTemporal = memoriaTemporal.get(
+    CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB,
+  );
+  if (contenidoMemoriaTemporal) return JSON.parse(contenidoMemoriaTemporal);
+
+  const configuracion = {
     inicializado: true,
     configuracion: leerArchivoJsonPorPropiedad_(
       CLAVES_PROPIEDADES.ARCHIVO_CONFIGURACION,
@@ -16,6 +22,18 @@ function obtenerConfiguracionCompleta_() {
     tiposRecibo: obtenerTiposRecibo_(),
     contactos: obtenerContactos_(),
   };
+  memoriaTemporal.put(
+    CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB,
+    JSON.stringify(configuracion),
+    300,
+  );
+  return configuracion;
+}
+
+function invalidarMemoriaTemporalConfiguracion_() {
+  CacheService.getScriptCache().remove(
+    CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB,
+  );
 }
 
 function obtenerTiposRecibo_() {
@@ -26,7 +44,7 @@ function obtenerTiposRecibo_() {
 }
 
 function obtenerTipoReciboPorIdentificador_(identificadorTipoRecibo) {
-  const tipoRecibo = obtenerTiposRecibo_().find(
+  const tipoRecibo = obtenerConfiguracionCompleta_().tiposRecibo.find(
     (tipo) => tipo.identificadorTipoRecibo === identificadorTipoRecibo,
   );
   if (!tipoRecibo) throw new Error("El tipo de recibo no existe.");
@@ -104,7 +122,7 @@ function guardarTipoRecibo(datosTipoRecibo, logotipoBase64) {
             : FORMATOS_PAPEL.CARTA,
         colorPrincipal: /^#[0-9A-Fa-f]{6}$/.test(datosTipoRecibo.colorPrincipal)
           ? datosTipoRecibo.colorPrincipal.toUpperCase()
-          : "#6750A4",
+          : "#379FFF",
         textoPrincipal,
         activo: datosTipoRecibo.activo !== false,
         fechaActualizacion: obtenerFechaIso_(new Date()),
@@ -124,6 +142,7 @@ function guardarTipoRecibo(datosTipoRecibo, logotipoBase64) {
         CLAVES_PROPIEDADES.ARCHIVO_TIPOS_RECIBO,
         documento,
       );
+      invalidarMemoriaTemporalConfiguracion_();
 
       return crearRespuestaExitosa_(tipoNormalizado, "Tipo de recibo guardado.");
     } finally {
@@ -205,6 +224,7 @@ function guardarContacto(datosContacto) {
         CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
         documento,
       );
+      invalidarMemoriaTemporalConfiguracion_();
       return crearRespuestaExitosa_(contactoNormalizado, "Contacto guardado.");
     } finally {
       bloqueo.releaseLock();
@@ -216,16 +236,7 @@ function guardarContacto(datosContacto) {
 
 function obtenerConfiguracionParaWeb() {
   try {
-    const configuracion = obtenerConfiguracionCompleta_();
-    if (configuracion.inicializado) {
-      configuracion.tiposRecibo = configuracion.tiposRecibo.map((tipo) => ({
-        ...tipo,
-        logotipoUrlDatos: tipo.identificadorLogotipo
-          ? obtenerArchivoComoUrlDatos_(tipo.identificadorLogotipo)
-          : "",
-      }));
-    }
-    return crearRespuestaExitosa_(configuracion);
+    return crearRespuestaExitosa_(obtenerConfiguracionCompleta_());
   } catch (error) {
     return crearRespuestaError_(error);
   }

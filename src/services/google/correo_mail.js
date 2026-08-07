@@ -27,7 +27,8 @@ function enviarReciboPorCorreo(identificadorRecibo, identificadoresContactos) {
     }
     if (!recibo.identificadorPdf) throw new Error("El recibo no tiene un PDF.");
 
-    const contactosActivos = obtenerContactos_().filter(
+    const configuracionCompleta = obtenerConfiguracionCompleta_();
+    const contactosActivos = configuracionCompleta.contactos.filter(
       (contacto) =>
         contacto.activo &&
         contactosSeleccionados.includes(contacto.identificadorContacto),
@@ -36,9 +37,7 @@ function enviarReciboPorCorreo(identificadorRecibo, identificadoresContactos) {
       throw new Error("Uno o más contactos no existen o están inactivos.");
     }
 
-    const configuracion = leerArchivoJsonPorPropiedad_(
-      CLAVES_PROPIEDADES.ARCHIVO_CONFIGURACION,
-    );
+    const configuracion = configuracionCompleta.configuracion;
     const plantilla = HtmlService.createTemplateFromFile(
       "src/views/emails/recibo",
     );

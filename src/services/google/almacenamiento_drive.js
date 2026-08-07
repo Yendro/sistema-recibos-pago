@@ -1,3 +1,55 @@
+/**
+ * Obtiene la carpeta de Drive que contiene el proyecto independiente de Apps
+ * Script. Nunca utiliza silenciosamente la raíz de Mi unidad como alternativa.
+ *
+ * @returns {GoogleAppsScript.Drive.Folder} Carpeta contenedora del proyecto.
+ */
+function obtenerDirectorioContenedorProyecto_() {
+  const propiedades = obtenerPropiedadesSistema_();
+  const identificadorRegistrado = propiedades.getProperty(
+    CLAVES_PROPIEDADES.DIRECTORIO_CONTENEDOR,
+  );
+  if (identificadorRegistrado) {
+    try {
+      return DriveApp.getFolderById(identificadorRegistrado);
+    } catch (error) {
+      console.warn(`Se resolverá nuevamente el directorio contenedor: ${error.message}`);
+    }
+  }
+
+  try {
+    const archivoProyecto = DriveApp.getFileById(ScriptApp.getScriptId());
+    const directoriosPadre = archivoProyecto.getParents();
+    if (!directoriosPadre.hasNext()) {
+      throw new Error("El proyecto no tiene una carpeta padre disponible.");
+    }
+    const directorioContenedor = directoriosPadre.next();
+    propiedades.setProperty(
+      CLAVES_PROPIEDADES.DIRECTORIO_CONTENEDOR,
+      directorioContenedor.getId(),
+    );
+    return directorioContenedor;
+  } catch (error) {
+    throw new Error(
+      "No se pudo identificar la carpeta que contiene el proyecto de Apps Script. " +
+        "Confirma que sea un proyecto independiente creado dentro de una carpeta de Drive. " +
+        `Detalle: ${error.message}`,
+    );
+  }
+}
+
+function asegurarDirectorioDentroDe_(directorio, directorioPadreEsperado) {
+  const identificadorEsperado = directorioPadreEsperado.getId();
+  const directoriosPadre = directorio.getParents();
+  while (directoriosPadre.hasNext()) {
+    if (directoriosPadre.next().getId() === identificadorEsperado) {
+      return directorio;
+    }
+  }
+  directorio.moveTo(directorioPadreEsperado);
+  return directorio;
+}
+
 function obtenerDirectorioPorPropiedad_(clavePropiedad) {
   const identificador = obtenerPropiedadObligatoria_(clavePropiedad);
   try {

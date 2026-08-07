@@ -43,6 +43,170 @@ function obtenerDocumentosRecibosExistentes_() {
     }));
 }
 
+function leerIndiceRecibos_() {
+  const documento = leerArchivoJsonPorPropiedad_(
+    CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
+  );
+  return {
+    documento,
+    recibos: Array.isArray(documento.recibos) ? documento.recibos : [],
+  };
+}
+
+function convertirReciboEnIndice_(recibo, identificadorArchivoDatos) {
+  return {
+    ...recibo,
+    identificadorArchivoDatos,
+  };
+}
+
+function guardarIndiceRecibos_(documento, recibos) {
+  documento.version = Number(documento.version || 0) + 1;
+  documento.recibos = recibos;
+  guardarArchivoJsonPorPropiedad_(
+    CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
+    documento,
+  );
+  invalidarMemoriaTemporalResumenRecibos_();
+}
+
+function actualizarIndiceRecibos_(recibosActualizados, identificadorArchivoDatos) {
+  const actualizaciones = Array.isArray(recibosActualizados)
+    ? recibosActualizados
+    : [recibosActualizados];
+  const indice = leerIndiceRecibos_();
+  const posiciones = new Map(
+    indice.recibos.map((recibo, posicion) => [recibo.identificadorRecibo, posicion]),
+  );
+
+  actualizaciones.forEach((recibo) => {
+    const reciboIndice = convertirReciboEnIndice_(
+      recibo,
+      identificadorArchivoDatos || recibo.identificadorArchivoDatos,
+    );
+    const posicion = posiciones.get(recibo.identificadorRecibo);
+    if (posicion === undefined) {
+      posiciones.set(recibo.identificadorRecibo, indice.recibos.length);
+      indice.recibos.push(reciboIndice);
+    } else {
+      indice.recibos[posicion] = reciboIndice;
+    }
+  });
+  guardarIndiceRecibos_(indice.documento, indice.recibos);
+}
+
+function actualizarIndiceRecibosConRecuperacion_(
+  recibosActualizados,
+  identificadorArchivoDatos,
+) {
+  try {
+    actualizarIndiceRecibos_(recibosActualizados, identificadorArchivoDatos);
+  } catch (error) {
+    console.warn(`Se reconstruirá el índice operativo: ${error.message}`);
+    reconstruirIndiceRecibos_();
+  }
+}
+
+function reconstruirIndiceRecibos_() {
+  const indice = leerIndiceRecibos_();
+  const recibos = [];
+  obtenerDocumentosRecibosExistentes_().forEach((referencia) => {
+    try {
+      const documento = leerArchivoJsonPorIdentificador_(
+        referencia.identificadorArchivo,
+      );
+      (documento.recibos || []).forEach((recibo) => {
+        recibos.push(
+          convertirReciboEnIndice_(recibo, referencia.identificadorArchivo),
+        );
+      });
+    } catch (error) {
+      console.error(`No se pudo indexar ${referencia.identificadorArchivo}: ${error.message}`);
+    }
+  });
+  guardarIndiceRecibos_(indice.documento, recibos);
+  return recibos.length;
+}
+
+function invalidarMemoriaTemporalResumenRecibos_() {
+  CacheService.getScriptCache().remove(
+    CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+  );
+}
+
+function obtenerResumenRecibos_(recibosIndice) {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const contenidoMemoriaTemporal = memoriaTemporal.get(
+    CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+  );
+  if (contenidoMemoriaTemporal) {
+    return JSON.parse(contenidoMemoriaTemporal);
+  }
+
+  const recibos = recibosIndice || leerIndiceRecibos_().recibos;
+  const resumen = recibos.reduce(
+    (acumulado, recibo) => {
+      if ([ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF].includes(recibo.estado)) {
+        acumulado.pendientesFirma += 1;
+      }
+      if ([ESTADOS_RECIBO.FIRMADO, ESTADOS_RECIBO.ERROR_ENVIO].includes(recibo.estado)) {
+        acumulado.pendientesEnvio += 1;
+      }
+      if (recibo.estado === ESTADOS_RECIBO.ENVIADO) acumulado.enviados += 1;
+      return acumulado;
+    },
+    { pendientesFirma: 0, pendientesEnvio: 0, enviados: 0 },
+  );
+  memoriaTemporal.put(
+    CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+    JSON.stringify(resumen),
+    300,
+  );
+  return resumen;
+}
+
+function filtrarYPaginarRecibos_(recibosIndice, criterios) {
+  const estadosSolicitados = Array.isArray(criterios?.estados)
+    ? criterios.estados
+    : String(criterios?.estado || "").trim()
+      ? [String(criterios.estado).trim()]
+      : [];
+  const pagina = Math.max(1, Number(criterios?.pagina || 1));
+  const tamanoPagina = Math.min(
+    100,
+    Math.max(1, Number(criterios?.tamanoPagina || 25)),
+  );
+  const textoBusqueda = normalizarTextoMayusculas_(criterios?.busqueda || "");
+  const recibos = recibosIndice
+    .filter(
+      (recibo) => !estadosSolicitados.length || estadosSolicitados.includes(recibo.estado),
+    )
+    .filter((recibo) => {
+      if (!textoBusqueda) return true;
+      return [
+        recibo.folio,
+        recibo.cliente,
+        recibo.concepto,
+        recibo.nombreTipoRecibo,
+      ].some((valor) => normalizarTextoMayusculas_(valor).includes(textoBusqueda));
+    })
+    .sort((primero, segundo) =>
+      String(segundo.fechaCreacion).localeCompare(String(primero.fechaCreacion)),
+    );
+  const inicio = (pagina - 1) * tamanoPagina;
+  return {
+    recibos: recibos.slice(inicio, inicio + tamanoPagina).map((recibo) => {
+      const reciboParaWeb = { ...recibo };
+      delete reciboParaWeb.identificadorArchivoDatos;
+      return reciboParaWeb;
+    }),
+    pagina,
+    tamanoPagina,
+    total: recibos.length,
+    totalPaginas: Math.max(1, Math.ceil(recibos.length / tamanoPagina)),
+  };
+}
+
 function validarDatosNuevoRecibo_(datosRecibo) {
   const cliente = normalizarTextoMayusculas_(datosRecibo.cliente);
   const concepto = normalizarTextoMayusculas_(datosRecibo.concepto);
@@ -156,6 +320,7 @@ function crearRecibosMasivo(datosLote) {
       documento.version = Number(documento.version || 0) + 1;
       documento.recibos = recibosExistentes.concat(nuevosRecibos);
       guardarArchivoJsonPorIdentificador_(archivo.getId(), documento);
+      actualizarIndiceRecibosConRecuperacion_(nuevosRecibos, archivo.getId());
 
       return crearRespuestaExitosa_(
         { recibos: nuevosRecibos, cantidad: nuevosRecibos.length },
@@ -204,67 +369,41 @@ function generarFolioSeguro_(prefijoFolio, fechaCreacion) {
 function listarRecibos(criterios) {
   try {
     if (!sistemaEstaInicializado_()) return crearRespuestaExitosa_({ recibos: [] });
-    const estadoSolicitado = String(criterios?.estado || "").trim();
-    const pagina = Math.max(1, Number(criterios?.pagina || 1));
-    const tamanoPagina = Math.min(
-      100,
-      Math.max(1, Number(criterios?.tamanoPagina || 25)),
+    return crearRespuestaExitosa_(
+      filtrarYPaginarRecibos_(leerIndiceRecibos_().recibos, criterios),
     );
-    const textoBusqueda = normalizarTextoMayusculas_(criterios?.busqueda || "");
-
-    let recibos = [];
-    obtenerDocumentosRecibosExistentes_().forEach((referencia) => {
-      try {
-        const documento = leerArchivoJsonPorIdentificador_(
-          referencia.identificadorArchivo,
-        );
-        if (Array.isArray(documento.recibos)) recibos.push(...documento.recibos);
-      } catch (error) {
-        console.error(error);
-      }
-    });
-
-    recibos = recibos
-      .filter((recibo) => !estadoSolicitado || recibo.estado === estadoSolicitado)
-      .filter((recibo) => {
-        if (!textoBusqueda) return true;
-        return [
-          recibo.folio,
-          recibo.cliente,
-          recibo.concepto,
-          recibo.nombreTipoRecibo,
-        ].some((valor) =>
-          normalizarTextoMayusculas_(valor).includes(textoBusqueda),
-        );
-      })
-      .sort((primero, segundo) =>
-        String(segundo.fechaCreacion).localeCompare(String(primero.fechaCreacion)),
-      );
-
-    const inicio = (pagina - 1) * tamanoPagina;
-    return crearRespuestaExitosa_({
-      recibos: recibos.slice(inicio, inicio + tamanoPagina),
-      pagina,
-      tamanoPagina,
-      total: recibos.length,
-      totalPaginas: Math.max(1, Math.ceil(recibos.length / tamanoPagina)),
-    });
   } catch (error) {
     return crearRespuestaError_(error);
   }
 }
 
 function encontrarRecibo_(identificadorRecibo) {
-  for (const referencia of obtenerDocumentosRecibosExistentes_()) {
-    const documento = leerArchivoJsonPorIdentificador_(
-      referencia.identificadorArchivo,
-    );
+  const referenciaIndice = leerIndiceRecibos_().recibos.find(
+    (recibo) => recibo.identificadorRecibo === identificadorRecibo,
+  );
+  const referenciasExistentes = obtenerDocumentosRecibosExistentes_();
+  const referencias = referenciaIndice?.identificadorArchivoDatos
+    ? [
+        { identificadorArchivo: referenciaIndice.identificadorArchivoDatos },
+        ...referenciasExistentes.filter(
+          (referencia) =>
+            referencia.identificadorArchivo !==
+            referenciaIndice.identificadorArchivoDatos,
+        ),
+      ]
+    : referenciasExistentes;
+
+  for (const referencia of referencias) {
+    const documento = leerArchivoJsonPorIdentificador_(referencia.identificadorArchivo);
     const posicion = (documento.recibos || []).findIndex(
       (recibo) => recibo.identificadorRecibo === identificadorRecibo,
     );
     if (posicion >= 0) {
       return {
-        referencia,
+        referencia: {
+          ...referencia,
+          identificadorArchivo: referencia.identificadorArchivo,
+        },
         documento,
         posicion,
         recibo: documento.recibos[posicion],
@@ -282,6 +421,10 @@ function guardarReciboEncontrado_(resultadoBusqueda) {
   guardarArchivoJsonPorIdentificador_(
     resultadoBusqueda.referencia.identificadorArchivo,
     resultadoBusqueda.documento,
+  );
+  actualizarIndiceRecibosConRecuperacion_(
+    resultadoBusqueda.recibo,
+    resultadoBusqueda.referencia.identificadorArchivo,
   );
 }
 
