@@ -125,7 +125,7 @@ function crearTipoReciboInicial_() {
     prefijoFolio: "REC",
     identificadorLogotipo: "",
     formatoPapel: FORMATOS_PAPEL.CARTA,
-    colorPrincipal: "#379FFF",
+    colorPrincipal: "#0E6BA8",
     textoPrincipal: TEXTO_PLANTILLA_GENERAL,
     activo: true,
     fechaActualizacion: obtenerFechaIso_(new Date()),

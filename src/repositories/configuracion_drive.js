@@ -122,7 +122,7 @@ function guardarTipoRecibo(datosTipoRecibo, logotipoBase64) {
             : FORMATOS_PAPEL.CARTA,
         colorPrincipal: /^#[0-9A-Fa-f]{6}$/.test(datosTipoRecibo.colorPrincipal)
           ? datosTipoRecibo.colorPrincipal.toUpperCase()
-          : "#379FFF",
+          : "#0E6BA8",
         textoPrincipal,
         activo: datosTipoRecibo.activo !== false,
         fechaActualizacion: obtenerFechaIso_(new Date()),
