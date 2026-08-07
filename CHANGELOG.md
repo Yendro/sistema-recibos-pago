@@ -10,7 +10,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 ### Añadido
 
 - Arquitectura independiente de Google Docs y de la hoja de configuración.
-- Rutas para inicio, recibos, creación masiva, firmas y configuración.
+- Ruta unificada de operación para captura, firma, historial y envío, además de
+  una ruta independiente de configuración.
 - Persistencia operativa mensual en archivos JSON de Drive.
 - Inicializador idempotente de directorios, archivos y reporte.
 - Configuración de tipos de recibo, logotipos y contactos desde la web app.

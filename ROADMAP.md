@@ -1,44 +1,62 @@
-# Roadmap: reestructuración del Sistema de Recibos y Pagos
+# Roadmap: Sistema de Recibos y Pagos
 
 ## Fase 0 — Entorno aislado
 
-- [x] Crear la rama `refactor/reestructuracion-completa`.
+- [x] Crear la rama de reestructuración.
 - [x] Retirar solicitudes y Google Forms del código.
 - [x] Retirar Google Docs del modelo de generación.
-- [ ] Crear y vincular un proyecto Apps Script exclusivo para pruebas.
-- [ ] Ejecutar la prueba vertical en el despliegue web.
+- [x] Validar el flujo vertical directamente en la Web App.
+- [x] Validar PDF, firma, fotografía y envío desde Apps Script.
 
 ## Fase 1 — Flujo funcional
 
-- [x] Inicialización automática de directorios y archivos.
+- [x] Inicialización automática de directorios, propiedades y archivos.
 - [x] Ubicación de dependencias dentro de la carpeta del proyecto Apps Script.
 - [x] Configuración de tipos de recibo y contactos.
-- [x] Creación masiva mediante datos tabulados.
-- [x] Captura manual y masiva mediante cuadrícula editable.
+- [x] Captura manual y pegado masivo mediante cuadrícula editable.
 - [x] Bandeja de recibos pendientes.
-- [x] Firma integrada en la representación del recibo.
-- [x] Captura y compresión de evidencia.
-- [x] Generación directa de PDF.
+- [x] Firma integrada y captura comprimida de evidencia.
+- [x] Generación directa de PDF en carta y A4.
 - [x] Envío a contactos configurados.
 - [x] Reporte derivado en Sheets.
-- [x] Ruta operativa unificada para captura, firma, consulta y envío.
-- [x] Índice de recibos y caché de configuración y resumen.
-- [x] Tema claro de alto contraste e iconos Material Symbols.
-- [ ] Validar visualmente el PDF generado por Apps Script.
+- [x] Operación unificada para captura, firma, consulta y envío.
+- [x] Índice de recibos y caché de lecturas frecuentes.
+- [x] Eliminación protegida de recibos no enviados.
+- [x] Interfaz responsive con Material Symbols y Nautical Blues.
 
 ## Fase 2 — Robustecimiento
 
-- [ ] Añadir respaldos versionados y recuperación de JSON.
-- [ ] Añadir historial de eventos por recibo.
-- [ ] Añadir anulación y reenvío controlado.
-- [ ] Añadir sincronización pendiente del reporte.
-- [ ] Añadir pruebas automatizadas del dominio.
-- [ ] Medir tiempos reales del despliegue en PC y tableta.
+La fase 2 no agrega el flujo principal: reduce el costo de recuperación y mejora
+la trazabilidad cuando un servicio de Google falla.
+
+| Capacidad | Estado actual | Trabajo restante | Prioridad |
+| --- | --- | --- | --- |
+| Respaldos versionados de JSON | Parcial: existe `respaldos/` y el índice puede reconstruirse | Crear snapshots antes de escrituras críticas, retención y restauración guiada | Alta después del lanzamiento |
+| Historial de eventos por recibo | Parcial: existen estado, fechas, destinatarios y último error | Registrar una secuencia inmutable de creación, firma, envío, error y eliminación | Media |
+| Anulación y reenvío controlado | Parcial: se reintenta `ERROR_ENVIO`; los enviados son inmutables | Definir si el negocio necesita anular o reenviar un recibo ya enviado | Baja hasta tener requisito |
+| Reconciliación del reporte | Parcial: sincronización inmediata y eliminación consistente | Crear una cola de pendientes y una función que reconstruya filas faltantes | Alta después del lanzamiento |
+| Pruebas automatizadas del dominio | Parcial: existe verificación estática de contratos y sintaxis | Añadir pruebas unitarias de estados, importes, plantillas y paginación | Media |
+| Medición de rendimiento | Parcial: índice, caché y navegación unificada ya mejoraron la respuesta | Registrar tiempos reales en PC y tableta con una muestra definida | Baja |
+
+Robustecimiento que ya contiene el proyecto:
+
+- Bloqueo de escrituras concurrentes con `LockService`.
+- Estados explícitos para errores de PDF y correo.
+- Validación del PDF antes de guardarlo.
+- Reconstrucción del índice desde archivos mensuales.
+- Invalidación de caché después de mutaciones.
+- Protección absoluta de recibos enviados frente a eliminación.
+- Restauración compensatoria al eliminar datos operativos.
+- Archivos eliminados mediante la papelera de Drive.
 
 ## Fase 3 — Liberación
 
-- [ ] Completar pruebas de aceptación.
-- [ ] Preparar el corte desde el sistema anterior.
-- [ ] Renombrar repositorio y remoto a `sistema-recibos-pagos`.
-- [ ] Crear despliegue productivo nuevo.
-- [ ] Archivar el sistema anterior como solo lectura.
+- [x] Validar el flujo de aceptación y el PDF en la Web App.
+- [ ] Publicar los commits pendientes en el remoto.
+- [ ] Integrar la rama de reestructuración en `main`.
+- [ ] Confirmar o actualizar la URL del remoto renombrado.
+- [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.
+- [ ] Crear o actualizar el despliegue productivo.
+- [ ] Ejecutar la prueba de humo en producción.
+- [ ] Conservar el sistema anterior disponible para reversión durante el corte.
+- [ ] Archivar el sistema anterior como solo lectura después de estabilizar.
