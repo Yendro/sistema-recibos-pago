@@ -16,6 +16,7 @@ recibos sin utilizar Google Docs como motor de plantillas.
 - Operación unificada sin recargar la aplicación entre captura, firma e historial.
 - Índice operativo para evitar recorridos completos de los archivos mensuales.
 - Tema claro de alto contraste con Material Symbols.
+- Eliminación protegida de recibos no enviados desde el historial.
 
 El módulo de solicitudes y la integración con Google Forms fueron retirados del
 alcance.

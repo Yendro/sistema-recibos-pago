@@ -24,6 +24,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Diagnóstico de imágenes antes y después de convertir el recibo a PDF.
 - Eliminación segura de contactos y tipos de recibo sin referencias históricas.
 - Estado de progreso y error dentro del diálogo de envío por correo.
+- Eliminación protegida de recibos no enviados desde el historial.
 
 ### Modificado
 
@@ -48,6 +49,10 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   finalizar correctamente.
 - Los filtros del historial comparten alineación en escritorio y mantienen una
   separación uniforme respecto de la tabla.
+- Al eliminar un recibo, el archivo mensual, el índice y el reporte se actualizan
+  bajo bloqueo; PDF, firma y fotografía se envían a la papelera.
+- Las evidencias quedan vinculadas antes de convertir el PDF para poder limpiarlas
+  aunque la conversión termine en error.
 
 ### Eliminado
 

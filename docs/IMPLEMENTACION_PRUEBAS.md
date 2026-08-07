@@ -121,6 +121,12 @@ URL_IMPLEMENTACION?ruta=configuracion
 14. Crea un contacto temporal, edítalo y elimínalo desde **Configuración**.
 15. Crea un tipo temporal sin recibos y elimínalo. Comprueba también que un tipo
     ya utilizado no se pueda borrar y sí se pueda desactivar.
+16. Crea un recibo pendiente, elimínalo desde **Historial** y confirma que ya no
+    aparezca en pendientes, en el índice ni en el reporte general.
+17. Firma otro recibo sin enviarlo, elimínalo y comprueba que la fila desaparezca
+    del reporte y que PDF, firma y fotografía estén en la papelera de Drive.
+18. Envía un recibo y confirma que su fila de historial no muestre la acción
+    **Eliminar**.
 
 ## 7. Integración con Google Sites
 
