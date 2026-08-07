@@ -178,7 +178,40 @@ function crearArchivoDesdeBase64_(
 function obtenerArchivoComoUrlDatos_(identificadorArchivo) {
   if (!identificadorArchivo) return "";
   const blob = DriveApp.getFileById(identificadorArchivo).getBlob();
-  return `data:${blob.getContentType()};base64,${Utilities.base64Encode(blob.getBytes())}`;
+  const bytes = blob.getBytes();
+  const tipoContenido = detectarTipoContenidoImagen_(blob.getContentType(), bytes);
+  if (!tipoContenido) {
+    throw new Error("El archivo de imagen almacenado no es PNG ni JPEG.");
+  }
+  return `data:${tipoContenido};base64,${Utilities.base64Encode(bytes)}`;
+}
+
+/**
+ * Normaliza el tipo MIME mediante la firma binaria. Drive puede devolver
+ * application/octet-stream para imágenes válidas subidas con anterioridad.
+ *
+ * @param {string} tipoRegistrado Tipo MIME informado por Drive.
+ * @param {number[]} bytes Contenido binario del archivo.
+ * @returns {string} Tipo de imagen reconocido o una cadena vacía.
+ */
+function detectarTipoContenidoImagen_(tipoRegistrado, bytes) {
+  const valores = (bytes || []).slice(0, 8).map((valor) =>
+    valor < 0 ? valor + 256 : valor,
+  );
+  if (
+    valores[0] === 0x89 &&
+    valores[1] === 0x50 &&
+    valores[2] === 0x4e &&
+    valores[3] === 0x47
+  ) {
+    return "image/png";
+  }
+  if (valores[0] === 0xff && valores[1] === 0xd8 && valores[2] === 0xff) {
+    return "image/jpeg";
+  }
+  return ["image/png", "image/jpeg"].includes(tipoRegistrado)
+    ? tipoRegistrado
+    : "";
 }
 
 function obtenerOCrearSubdirectorio_(directorioPadre, nombreDirectorio) {

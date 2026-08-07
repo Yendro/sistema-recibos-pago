@@ -74,26 +74,29 @@ function firmarYGenerarPdf(
       plantilla.logotipoUrlDatos = tipoRecibo.identificadorLogotipo
         ? obtenerArchivoComoUrlDatos_(tipoRecibo.identificadorLogotipo)
         : "";
-      plantilla.firmaUrlDatos = obtenerArchivoComoUrlDatos_(archivoFirma.getId());
-      plantilla.fotografiaUrlDatos = obtenerArchivoComoUrlDatos_(
-        archivoFotografia.getId(),
-      );
+      // Se usa el recurso recibido directamente para evitar dos lecturas
+      // adicionales de Drive y conservar su tipo MIME durante la conversión.
+      plantilla.firmaUrlDatos = firmaBase64;
+      plantilla.fotografiaUrlDatos = fotografiaBase64;
 
-      const contenidoHtml = plantilla.evaluate().getContent();
+      validarUrlDatosImagen_(plantilla.firmaUrlDatos, "la firma");
+      validarUrlDatosImagen_(plantilla.fotografiaUrlDatos, "la fotografía");
+      if (tipoRecibo.identificadorLogotipo) {
+        validarUrlDatosImagen_(plantilla.logotipoUrlDatos, "el logotipo");
+      }
+
+      const salidaHtml = plantilla.evaluate();
       const imagenesEsperadas = tipoRecibo.identificadorLogotipo ? 3 : 2;
-      validarImagenesHtmlPdf_(contenidoHtml, imagenesEsperadas);
-
-      const contenidoPdf = Utilities.newBlob(
-        contenidoHtml,
-        MimeType.HTML,
-        `${nombreBase}.html`,
-      )
+      const contenidoPdf = salidaHtml
         .getAs(MimeType.PDF)
         .setName(`${nombreBase}.pdf`);
       const diagnosticoImagenes = diagnosticarImagenesPdf_(contenidoPdf);
-      if (diagnosticoImagenes.dimensionMayor < 100) {
+      if (
+        diagnosticoImagenes.cantidadObjetos < imagenesEsperadas ||
+        diagnosticoImagenes.dimensionMayor < 100
+      ) {
         throw new Error(
-          "El conversor PDF no incorporó las imágenes del recibo. No se guardó un documento incompleto.",
+          `El conversor PDF incorporó ${diagnosticoImagenes.cantidadObjetos} de ${imagenesEsperadas} imagen(es). No se guardó un documento incompleto.`,
         );
       }
 
@@ -157,14 +160,20 @@ function diagnosticarImagenesPdf_(contenidoPdf) {
   };
 }
 
-function validarImagenesHtmlPdf_(contenidoHtml, cantidadEsperada) {
-  const coincidencias = String(contenidoHtml || "").match(
-    /src=["']data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+["']/g,
-  ) || [];
-  if (coincidencias.length !== cantidadEsperada) {
-    throw new Error(
-      `La plantilla PDF esperaba ${cantidadEsperada} imagen(es), pero recibió ${coincidencias.length}.`,
-    );
+/**
+ * Comprueba el recurso antes de entregarlo al motor HTML. La validación no se
+ * hace sobre el HTML evaluado porque HtmlService puede normalizar los atributos
+ * y producir falsos negativos aunque el recurso Base64 sea correcto.
+ *
+ * @param {string} urlDatos Recurso codificado para incrustar en el documento.
+ * @param {string} nombreRecurso Nombre legible usado en el mensaje de error.
+ */
+function validarUrlDatosImagen_(urlDatos, nombreRecurso) {
+  const coincidencia = String(urlDatos || "").match(
+    /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/,
+  );
+  if (!coincidencia || coincidencia[2].length < 100) {
+    throw new Error(`No fue posible preparar ${nombreRecurso} para el PDF.`);
   }
 }
 
