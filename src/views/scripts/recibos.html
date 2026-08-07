@@ -1,0 +1,138 @@
+<script>
+  let paginaRecibos = 1;
+  let totalPaginasRecibos = 1;
+  let identificadorReciboCorreo = "";
+  let contactosEnvio = [];
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("botonBuscarRecibos").addEventListener("click", () => { paginaRecibos = 1; cargarRecibos(); });
+    document.getElementById("paginaAnterior").addEventListener("click", () => { if (paginaRecibos > 1) { paginaRecibos--; cargarRecibos(); } });
+    document.getElementById("paginaSiguiente").addEventListener("click", () => { if (paginaRecibos < totalPaginasRecibos) { paginaRecibos++; cargarRecibos(); } });
+    document.getElementById("botonCancelarCorreo").addEventListener("click", () => document.getElementById("dialogoCorreo").close());
+    document.getElementById("botonEnviarCorreo").addEventListener("click", enviarCorreoSeleccionado);
+    cargarContactosEnvio();
+    cargarRecibos();
+  });
+
+  async function cargarContactosEnvio() {
+    try {
+      const datos = exigirRespuestaExitosa(await ejecutarServidor("obtenerConfiguracionParaWeb"));
+      contactosEnvio = (datos.contactos || []).filter((contacto) => contacto.activo);
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    }
+  }
+
+  async function cargarRecibos() {
+    mostrarCarga(true, "Consultando recibos…");
+    try {
+      const datos = exigirRespuestaExitosa(await ejecutarServidor("listarRecibos", {
+        pagina: paginaRecibos,
+        tamanoPagina: 25,
+        estado: document.getElementById("estadoRecibos").value,
+        busqueda: document.getElementById("busquedaRecibos").value,
+      }));
+      totalPaginasRecibos = datos.totalPaginas;
+      paginaRecibos = datos.pagina;
+      renderizarTablaRecibos(datos.recibos);
+      document.getElementById("indicadorPagina").textContent = `Página ${paginaRecibos} de ${totalPaginasRecibos} · ${datos.total} recibo(s)`;
+      document.getElementById("paginaAnterior").disabled = paginaRecibos <= 1;
+      document.getElementById("paginaSiguiente").disabled = paginaRecibos >= totalPaginasRecibos;
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  function renderizarTablaRecibos(recibos) {
+    const cuerpo = document.getElementById("tablaRecibos");
+    cuerpo.replaceChildren();
+    if (!recibos.length) {
+      const fila = document.createElement("tr");
+      const celda = crearElementoTexto("td", "No se encontraron recibos.", "vacio");
+      celda.colSpan = 6;
+      fila.append(celda);
+      cuerpo.append(fila);
+      return;
+    }
+    recibos.forEach((recibo) => {
+      const fila = document.createElement("tr");
+      fila.append(
+        crearElementoTexto("td", recibo.folio),
+        crearElementoTexto("td", recibo.cliente),
+        crearElementoTexto("td", recibo.nombreTipoRecibo),
+        crearElementoTexto("td", formatearMoneda(recibo.importe)),
+      );
+      const celdaEstado = document.createElement("td");
+      celdaEstado.append(crearElementoTexto("span", traducirEstado(recibo.estado), `estado ${claseEstado(recibo.estado)}`));
+      const celdaAcciones = document.createElement("td");
+      const acciones = document.createElement("div");
+      acciones.className = "acciones";
+      if (recibo.urlPdf) {
+        const abrir = crearElementoTexto("button", "Abrir PDF", "boton boton-texto");
+        abrir.type = "button";
+        abrir.addEventListener("click", () => window.open(recibo.urlPdf, "_blank", "noopener"));
+        acciones.append(abrir);
+      }
+      if (["FIRMADO", "ERROR_ENVIO"].includes(recibo.estado)) {
+        const enviar = crearElementoTexto("button", "Enviar", "boton boton-primario");
+        enviar.type = "button";
+        enviar.addEventListener("click", () => abrirDialogoCorreo(recibo.identificadorRecibo));
+        acciones.append(enviar);
+      }
+      celdaAcciones.append(acciones);
+      fila.append(celdaEstado, celdaAcciones);
+      cuerpo.append(fila);
+    });
+  }
+
+  function traducirEstado(estado) {
+    return ({ PENDIENTE_FIRMA: "Pendiente de firma", FIRMADO: "Pendiente de envío", ENVIADO: "Enviado", ERROR_PDF: "Error de PDF", ERROR_ENVIO: "Error de envío", ANULADO: "Anulado" })[estado] || estado;
+  }
+
+  function claseEstado(estado) {
+    if (estado === "ENVIADO") return "estado-correcto";
+    if (estado.startsWith("ERROR")) return "estado-error";
+    return "estado-advertencia";
+  }
+
+  function abrirDialogoCorreo(identificadorRecibo) {
+    identificadorReciboCorreo = identificadorRecibo;
+    const contenedor = document.getElementById("contactosCorreo");
+    contenedor.replaceChildren();
+    if (!contactosEnvio.length) {
+      contenedor.append(crearElementoTexto("p", "Configura al menos un contacto activo.", "texto-secundario"));
+      document.getElementById("botonEnviarCorreo").disabled = true;
+    } else {
+      document.getElementById("botonEnviarCorreo").disabled = false;
+      contactosEnvio.forEach((contacto) => {
+        const etiqueta = document.createElement("label");
+        etiqueta.className = "tarjeta campo-en-linea";
+        const casilla = document.createElement("input");
+        casilla.type = "checkbox";
+        casilla.value = contacto.identificadorContacto;
+        etiqueta.append(casilla, crearElementoTexto("span", `${contacto.nombre} · ${contacto.correoOriginal}`));
+        contenedor.append(etiqueta);
+      });
+    }
+    document.getElementById("dialogoCorreo").showModal();
+  }
+
+  async function enviarCorreoSeleccionado() {
+    const seleccionados = Array.from(document.querySelectorAll("#contactosCorreo input:checked")).map((elemento) => elemento.value);
+    if (!seleccionados.length) return mostrarMensaje("Selecciona al menos un contacto.", true);
+    mostrarCarga(true, "Enviando el PDF…");
+    try {
+      const respuesta = await ejecutarServidor("enviarReciboPorCorreo", identificadorReciboCorreo, seleccionados);
+      exigirRespuestaExitosa(respuesta);
+      document.getElementById("dialogoCorreo").close();
+      mostrarMensaje(respuesta.mensaje);
+      await cargarRecibos();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+</script>

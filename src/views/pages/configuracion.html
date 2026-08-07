@@ -1,0 +1,68 @@
+<section id="panelSinInicializar" class="tarjeta seccion oculto">
+  <h2>Instalación pendiente</h2>
+  <p class="texto-secundario">
+    Ejecuta primero <code>inicializarSistemaPruebas</code> desde Apps Script. El
+    botón siguiente se ofrece únicamente para reparar un entorno de pruebas.
+  </p>
+  <button id="botonInicializar" class="boton boton-primario" type="button">Inicializar entorno</button>
+</section>
+
+<div id="contenidoConfiguracion" class="oculto">
+  <section class="rejilla rejilla-dos seccion">
+    <article class="tarjeta">
+      <h2>Tipo de recibo</h2>
+      <form id="formularioTipoRecibo">
+        <input id="identificadorTipoRecibo" type="hidden" />
+        <div class="campo"><label for="nombreTipoRecibo">Nombre</label><input id="nombreTipoRecibo" required placeholder="RECIBO GLR" /></div>
+        <div class="campo"><label for="nombreEmpresa">Empresa</label><input id="nombreEmpresa" required /></div>
+        <div class="campo"><label for="nombreProveedor">Proveedor mostrado</label><input id="nombreProveedor" required /></div>
+        <div class="rejilla rejilla-dos">
+          <div class="campo"><label for="prefijoFolio">Prefijo</label><input id="prefijoFolio" required maxlength="12" /></div>
+          <div class="campo"><label for="formatoPapel">Papel</label><select id="formatoPapel"><option value="CARTA">Carta</option><option value="A4">A4</option></select></div>
+        </div>
+        <div class="campo"><label for="colorPrincipal">Color principal</label><input id="colorPrincipal" type="color" value="#6750A4" /></div>
+        <div class="tarjeta" style="margin-bottom:14px">
+          <strong>Texto fijo de la plantilla</strong>
+          <p class="texto-secundario texto-pequeno" style="white-space:pre-line">RECIBÍ DE {{Proveedor}}, LA CANTIDAD DE {{Importe}}
+SON: ({{ImporteLetra}})
+POR CONCEPTO DE: {{Concepto}}</p>
+        </div>
+        <div class="campo"><label for="archivoLogotipo">Logotipo PNG o JPEG</label><input id="archivoLogotipo" type="file" accept="image/png,image/jpeg" /></div>
+        <label class="campo-en-linea"><input id="tipoReciboActivo" type="checkbox" checked /> Tipo activo</label>
+        <div class="acciones">
+          <button id="botonNuevoTipo" class="boton boton-texto" type="button">Limpiar</button>
+          <button class="boton boton-primario" type="submit">Guardar tipo</button>
+        </div>
+      </form>
+    </article>
+
+    <article class="tarjeta">
+      <h2>Tipos configurados</h2>
+      <div id="listaTiposRecibo" class="rejilla"></div>
+    </article>
+  </section>
+
+  <section class="rejilla rejilla-dos seccion">
+    <article class="tarjeta">
+      <h2>Nuevo contacto</h2>
+      <form id="formularioContacto">
+        <input id="identificadorContacto" type="hidden" />
+        <div class="campo"><label for="nombreContacto">Nombre</label><input id="nombreContacto" required /></div>
+        <div class="campo"><label for="correoContacto">Correo</label><input id="correoContacto" type="email" required /></div>
+        <label class="campo-en-linea"><input id="contactoActivo" type="checkbox" checked /> Contacto activo</label>
+        <div class="acciones"><button class="boton boton-primario" type="submit">Guardar contacto</button></div>
+      </form>
+    </article>
+    <article class="tarjeta">
+      <h2>Contactos de envío</h2>
+      <div id="listaContactos" class="rejilla"></div>
+    </article>
+  </section>
+
+  <section class="tarjeta">
+    <div class="encabezado-seccion">
+      <div><h2>Reporte general</h2><p class="texto-secundario texto-pequeno">La aplicación escribe el reporte, pero no lo utiliza como fuente operativa.</p></div>
+      <button id="botonAbrirReporte" class="boton boton-tonal" type="button">Abrir reporte</button>
+    </div>
+  </section>
+</div>

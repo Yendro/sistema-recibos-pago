@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <?!= incluir_('src/views/styles/material'); ?>
+  </head>
+  <body data-ruta="<?= nombreRuta ?>">
+    <header class="barra-superior">
+      <div>
+        <p class="etiqueta-superior"><?= nombreAplicacion ?></p>
+        <h1><?= tituloRuta ?></h1>
+      </div>
+      <span class="indicador-entorno" title="Entorno actual">PRUEBAS</span>
+    </header>
+
+    <main class="contenedor-aplicacion">
+      <?!= incluir_(archivoVista); ?>
+    </main>
+
+    <div id="capaCarga" class="capa-carga oculto" aria-live="polite">
+      <div class="indicador-circular"></div>
+      <p id="textoCarga">Procesando…</p>
+    </div>
+    <div id="mensajeGlobal" class="mensaje-global oculto" role="status"></div>
+
+    <?!= incluir_('src/views/scripts/core'); ?>
+    <?!= incluir_(archivoScript); ?>
+  </body>
+</html>

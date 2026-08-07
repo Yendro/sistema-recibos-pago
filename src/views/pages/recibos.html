@@ -1,0 +1,46 @@
+<section class="tarjeta seccion">
+  <div class="rejilla rejilla-dos">
+    <div class="campo">
+      <label for="busquedaRecibos">Buscar</label>
+      <input id="busquedaRecibos" placeholder="Folio, cliente, concepto o tipo" />
+    </div>
+    <div class="campo">
+      <label for="estadoRecibos">Estado</label>
+      <select id="estadoRecibos">
+        <option value="">Todos</option>
+        <option value="PENDIENTE_FIRMA">Pendiente de firma</option>
+        <option value="FIRMADO">Pendiente de envío</option>
+        <option value="ENVIADO">Enviado</option>
+        <option value="ERROR_PDF">Error de PDF</option>
+        <option value="ERROR_ENVIO">Error de envío</option>
+      </select>
+    </div>
+  </div>
+  <div class="acciones">
+    <button id="botonBuscarRecibos" class="boton boton-primario" type="button">Aplicar filtros</button>
+  </div>
+</section>
+
+<section class="tarjeta">
+  <div class="tabla-contenedor">
+    <table>
+      <thead><tr><th>Folio</th><th>Cliente</th><th>Tipo</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="tablaRecibos"><tr><td colspan="6" class="vacio">Cargando…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="acciones" style="margin-top:16px">
+    <button id="paginaAnterior" class="boton boton-tonal" type="button">Anterior</button>
+    <span id="indicadorPagina" class="texto-secundario"></span>
+    <button id="paginaSiguiente" class="boton boton-tonal" type="button">Siguiente</button>
+  </div>
+</section>
+
+<dialog id="dialogoCorreo" class="tarjeta" style="width:min(560px, calc(100% - 24px)); border:0">
+  <h2>Enviar recibo</h2>
+  <p class="texto-secundario">Selecciona los contactos que recibirán el PDF firmado.</p>
+  <div id="contactosCorreo" class="rejilla"></div>
+  <div class="acciones" style="margin-top:20px">
+    <button id="botonCancelarCorreo" class="boton boton-texto" type="button">Cancelar</button>
+    <button id="botonEnviarCorreo" class="boton boton-primario" type="button">Enviar PDF</button>
+  </div>
+</dialog>

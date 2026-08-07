@@ -1,0 +1,177 @@
+<script>
+  let tiposReciboConfigurados = [];
+  let contactosConfigurados = [];
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("formularioTipoRecibo").addEventListener("submit", guardarTipoDesdeFormulario);
+    document.getElementById("formularioContacto").addEventListener("submit", guardarContactoDesdeFormulario);
+    document.getElementById("botonNuevoTipo").addEventListener("click", limpiarFormularioTipo);
+    document.getElementById("botonInicializar").addEventListener("click", inicializarEntorno);
+    document.getElementById("botonAbrirReporte").addEventListener("click", abrirReporte);
+    cargarConfiguracion();
+  });
+
+  async function cargarConfiguracion() {
+    mostrarCarga(true, "Cargando configuración…");
+    try {
+      const datos = exigirRespuestaExitosa(await ejecutarServidor("obtenerConfiguracionParaWeb"));
+      document.getElementById("panelSinInicializar").classList.toggle("oculto", datos.inicializado);
+      document.getElementById("contenidoConfiguracion").classList.toggle("oculto", !datos.inicializado);
+      if (!datos.inicializado) return;
+      tiposReciboConfigurados = datos.tiposRecibo;
+      contactosConfigurados = datos.contactos;
+      renderizarTiposRecibo();
+      renderizarContactos();
+      if (!document.getElementById("identificadorTipoRecibo").value && tiposReciboConfigurados.length) {
+        editarTipoRecibo(tiposReciboConfigurados[0].identificadorTipoRecibo);
+      }
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  async function inicializarEntorno() {
+    mostrarCarga(true, "Creando estructura en Drive…");
+    try {
+      const respuesta = await ejecutarServidor("inicializarSistemaPruebas");
+      exigirRespuestaExitosa(respuesta);
+      mostrarMensaje(respuesta.mensaje);
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  function renderizarTiposRecibo() {
+    const contenedor = document.getElementById("listaTiposRecibo");
+    contenedor.replaceChildren();
+    tiposReciboConfigurados.forEach((tipo) => {
+      const tarjeta = document.createElement("button");
+      tarjeta.type = "button";
+      tarjeta.className = "tarjeta boton-texto";
+      tarjeta.style.textAlign = "left";
+      tarjeta.addEventListener("click", () => editarTipoRecibo(tipo.identificadorTipoRecibo));
+      const titulo = crearElementoTexto("strong", tipo.nombreTipoRecibo);
+      const detalle = crearElementoTexto("span", `${tipo.nombreProveedor} · ${tipo.formatoPapel}`, "texto-secundario texto-pequeno");
+      detalle.style.display = "block";
+      tarjeta.append(titulo, detalle);
+      contenedor.append(tarjeta);
+    });
+  }
+
+  function editarTipoRecibo(identificador) {
+    const tipo = tiposReciboConfigurados.find((elemento) => elemento.identificadorTipoRecibo === identificador);
+    if (!tipo) return;
+    document.getElementById("identificadorTipoRecibo").value = tipo.identificadorTipoRecibo;
+    document.getElementById("nombreTipoRecibo").value = tipo.nombreTipoRecibo;
+    document.getElementById("nombreEmpresa").value = tipo.nombreEmpresa;
+    document.getElementById("nombreProveedor").value = tipo.nombreProveedor;
+    document.getElementById("prefijoFolio").value = tipo.prefijoFolio;
+    document.getElementById("formatoPapel").value = tipo.formatoPapel;
+    document.getElementById("colorPrincipal").value = tipo.colorPrincipal;
+    document.getElementById("tipoReciboActivo").checked = tipo.activo;
+  }
+
+  function limpiarFormularioTipo() {
+    document.getElementById("formularioTipoRecibo").reset();
+    document.getElementById("identificadorTipoRecibo").value = "";
+    document.getElementById("colorPrincipal").value = "#6750A4";
+    document.getElementById("tipoReciboActivo").checked = true;
+  }
+
+  async function guardarTipoDesdeFormulario(evento) {
+    evento.preventDefault();
+    mostrarCarga(true, "Guardando tipo de recibo…");
+    try {
+      const archivo = document.getElementById("archivoLogotipo").files[0];
+      const logotipoBase64 = archivo
+        ? await comprimirImagen(archivo, 600, .82, true)
+        : "";
+      const respuesta = await ejecutarServidor("guardarTipoRecibo", {
+        identificadorTipoRecibo: document.getElementById("identificadorTipoRecibo").value,
+        nombreTipoRecibo: document.getElementById("nombreTipoRecibo").value,
+        nombreEmpresa: document.getElementById("nombreEmpresa").value,
+        nombreProveedor: document.getElementById("nombreProveedor").value,
+        prefijoFolio: document.getElementById("prefijoFolio").value,
+        formatoPapel: document.getElementById("formatoPapel").value,
+        colorPrincipal: document.getElementById("colorPrincipal").value,
+        activo: document.getElementById("tipoReciboActivo").checked,
+      }, logotipoBase64);
+      exigirRespuestaExitosa(respuesta);
+      mostrarMensaje(respuesta.mensaje);
+      document.getElementById("archivoLogotipo").value = "";
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  function renderizarContactos() {
+    const contenedor = document.getElementById("listaContactos");
+    contenedor.replaceChildren();
+    if (!contactosConfigurados.length) {
+      contenedor.append(crearElementoTexto("p", "No hay contactos configurados.", "texto-secundario"));
+      return;
+    }
+    contactosConfigurados.forEach((contacto) => {
+      const tarjeta = document.createElement("button");
+      tarjeta.type = "button";
+      tarjeta.className = "tarjeta boton-texto";
+      tarjeta.style.textAlign = "left";
+      tarjeta.addEventListener("click", () => editarContacto(contacto.identificadorContacto));
+      tarjeta.append(
+        crearElementoTexto("strong", contacto.nombre),
+        crearElementoTexto("span", contacto.correoOriginal, "texto-secundario texto-pequeno"),
+      );
+      tarjeta.lastChild.style.display = "block";
+      contenedor.append(tarjeta);
+    });
+  }
+
+  function editarContacto(identificador) {
+    const contacto = contactosConfigurados.find((elemento) => elemento.identificadorContacto === identificador);
+    if (!contacto) return;
+    document.getElementById("identificadorContacto").value = contacto.identificadorContacto;
+    document.getElementById("nombreContacto").value = contacto.nombre;
+    document.getElementById("correoContacto").value = contacto.correoOriginal;
+    document.getElementById("contactoActivo").checked = contacto.activo;
+  }
+
+  async function guardarContactoDesdeFormulario(evento) {
+    evento.preventDefault();
+    mostrarCarga(true, "Guardando contacto…");
+    try {
+      const respuesta = await ejecutarServidor("guardarContacto", {
+        identificadorContacto: document.getElementById("identificadorContacto").value,
+        nombre: document.getElementById("nombreContacto").value,
+        correo: document.getElementById("correoContacto").value,
+        activo: document.getElementById("contactoActivo").checked,
+      });
+      exigirRespuestaExitosa(respuesta);
+      mostrarMensaje(respuesta.mensaje);
+      document.getElementById("formularioContacto").reset();
+      document.getElementById("identificadorContacto").value = "";
+      document.getElementById("contactoActivo").checked = true;
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  async function abrirReporte() {
+    try {
+      const datos = exigirRespuestaExitosa(await ejecutarServidor("obtenerUrlReporteGeneral"));
+      window.open(datos.url, "_blank", "noopener");
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    }
+  }
+</script>

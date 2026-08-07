@@ -1,0 +1,89 @@
+<script>
+  function ejecutarServidor(nombreFuncion, ...argumentos) {
+    return new Promise((resolver, rechazar) => {
+      const ejecutor = google.script.run
+        .withSuccessHandler(resolver)
+        .withFailureHandler((error) => rechazar(new Error(error.message || error)));
+      ejecutor[nombreFuncion](...argumentos);
+    });
+  }
+
+  function mostrarCarga(mostrar, texto) {
+    document.getElementById("textoCarga").textContent = texto || "Procesando…";
+    document.getElementById("capaCarga").classList.toggle("oculto", !mostrar);
+  }
+
+  function mostrarMensaje(mensaje, esError = false) {
+    const elemento = document.getElementById("mensajeGlobal");
+    elemento.textContent = mensaje;
+    elemento.className = `mensaje-global${esError ? " mensaje-error" : ""}`;
+    window.clearTimeout(mostrarMensaje.temporizador);
+    mostrarMensaje.temporizador = window.setTimeout(
+      () => elemento.classList.add("oculto"),
+      5000,
+    );
+  }
+
+  function exigirRespuestaExitosa(respuesta) {
+    if (!respuesta || !respuesta.exito) {
+      throw new Error(respuesta?.mensaje || "La operación no pudo completarse.");
+    }
+    return respuesta.datos;
+  }
+
+  function crearElementoTexto(etiqueta, texto, clase) {
+    const elemento = document.createElement(etiqueta);
+    if (clase) elemento.className = clase;
+    elemento.textContent = texto;
+    return elemento;
+  }
+
+  function formatearMoneda(valor) {
+    return Number(valor || 0).toLocaleString("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    });
+  }
+
+  function formatearFecha(valor) {
+    if (!valor) return "—";
+    const fecha = new Date(valor);
+    return Number.isNaN(fecha.getTime())
+      ? valor
+      : new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(fecha);
+  }
+
+  function comprimirImagen(
+    archivo,
+    anchoMaximo = 1200,
+    calidad = 0.78,
+    conservarTransparencia = false,
+  ) {
+    return new Promise((resolver, rechazar) => {
+      if (!archivo) return resolver("");
+      if (!["image/jpeg", "image/png"].includes(archivo.type)) {
+        return rechazar(new Error("Selecciona una imagen PNG o JPEG."));
+      }
+      const lector = new FileReader();
+      lector.onerror = () => rechazar(new Error("No se pudo leer la imagen."));
+      lector.onload = () => {
+        const imagen = new Image();
+        imagen.onerror = () => rechazar(new Error("La imagen no es válida."));
+        imagen.onload = () => {
+          const proporcion = Math.min(1, anchoMaximo / imagen.width);
+          const lienzo = document.createElement("canvas");
+          lienzo.width = Math.round(imagen.width * proporcion);
+          lienzo.height = Math.round(imagen.height * proporcion);
+          lienzo.getContext("2d").drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+          const tipoSalida =
+            conservarTransparencia && archivo.type === "image/png"
+              ? "image/png"
+              : "image/jpeg";
+          resolver(lienzo.toDataURL(tipoSalida, calidad));
+        };
+        imagen.src = lector.result;
+      };
+      lector.readAsDataURL(archivo);
+    });
+  }
+</script>

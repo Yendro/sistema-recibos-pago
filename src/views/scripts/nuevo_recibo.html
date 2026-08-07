@@ -1,0 +1,138 @@
+<script>
+  let filasInterpretadas = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    document.getElementById("botonInterpretar").addEventListener("click", interpretarPegado);
+    document.getElementById("botonLimpiar").addEventListener("click", limpiarLote);
+    document.getElementById("botonGuardarLote").addEventListener("click", guardarLote);
+    document.getElementById("datosPegados").addEventListener("paste", () => {
+      window.setTimeout(interpretarPegado, 0);
+    });
+    await cargarTiposRecibo();
+  });
+
+  async function cargarTiposRecibo() {
+    mostrarCarga(true, "Cargando tipos de recibo…");
+    try {
+      const configuracion = exigirRespuestaExitosa(
+        await ejecutarServidor("obtenerConfiguracionParaWeb"),
+      );
+      if (!configuracion.inicializado) {
+        throw new Error("Inicializa el sistema antes de crear recibos.");
+      }
+      const selector = document.getElementById("tipoRecibo");
+      selector.replaceChildren();
+      configuracion.tiposRecibo
+        .filter((tipo) => tipo.activo)
+        .forEach((tipo) => {
+          const opcion = document.createElement("option");
+          opcion.value = tipo.identificadorTipoRecibo;
+          opcion.textContent = `${tipo.nombreTipoRecibo} · ${tipo.nombreProveedor}`;
+          selector.append(opcion);
+        });
+      if (!selector.options.length) throw new Error("No hay tipos de recibo activos.");
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  function interpretarPegado() {
+    const contenido = document.getElementById("datosPegados").value.trim();
+    filasInterpretadas = contenido
+      ? contenido.split(/\r?\n/).filter((linea) => linea.trim()).map((linea, indice) => interpretarFila(linea, indice))
+      : [];
+    renderizarFilasInterpretadas();
+  }
+
+  function interpretarFila(linea, indice) {
+    const columnas = linea.split("\t");
+    const errores = [];
+    if (columnas.length !== 4) errores.push("Se esperaban 4 columnas");
+    const cliente = String(columnas[0] || "").trim();
+    const importe = interpretarImporte(columnas[1]);
+    const concepto = String(columnas[2] || "").trim();
+    const fechaPago = interpretarFecha(columnas[3]);
+    if (!cliente) errores.push("Falta cliente");
+    if (!Number.isFinite(importe) || importe <= 0) errores.push("Importe inválido");
+    if (!concepto) errores.push("Falta concepto");
+    if (!fechaPago) errores.push("Fecha inválida");
+    return { numeroFila: indice + 1, cliente, importe, concepto, fechaPago, errores };
+  }
+
+  function interpretarImporte(valor) {
+    let texto = String(valor || "").trim().replace(/[$\s]/g, "");
+    if (texto.includes(",") && texto.includes(".")) texto = texto.replace(/,/g, "");
+    else if ((texto.match(/,/g) || []).length === 1 && !texto.includes(".")) {
+      const partes = texto.split(",");
+      texto = partes[1].length <= 2 ? `${partes[0]}.${partes[1]}` : partes.join("");
+    } else texto = texto.replace(/,/g, "");
+    return Number(texto);
+  }
+
+  function interpretarFecha(valor) {
+    const texto = String(valor || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
+    const coincidencia = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if (!coincidencia) return "";
+    const fecha = `${coincidencia[3]}-${coincidencia[2].padStart(2, "0")}-${coincidencia[1].padStart(2, "0")}`;
+    const objetoFecha = new Date(`${fecha}T12:00:00`);
+    return Number.isNaN(objetoFecha.getTime()) ? "" : fecha;
+  }
+
+  function renderizarFilasInterpretadas() {
+    const cuerpo = document.getElementById("filasLote");
+    cuerpo.replaceChildren();
+    if (!filasInterpretadas.length) {
+      const fila = document.createElement("tr");
+      const celda = crearElementoTexto("td", "No hay datos interpretados.", "vacio");
+      celda.colSpan = 6;
+      fila.append(celda);
+      cuerpo.append(fila);
+    } else {
+      filasInterpretadas.forEach((datos) => {
+        const fila = document.createElement("tr");
+        [
+          datos.numeroFila,
+          datos.cliente,
+          Number.isFinite(datos.importe) ? formatearMoneda(datos.importe) : "—",
+          datos.concepto,
+          datos.fechaPago || "—",
+          datos.errores.length ? datos.errores.join(" · ") : "Correcta",
+        ].forEach((texto, indice) => {
+          const celda = crearElementoTexto("td", texto);
+          if (indice === 5) celda.style.color = datos.errores.length ? "var(--color-error)" : "var(--color-correcto)";
+          fila.append(celda);
+        });
+        cuerpo.append(fila);
+      });
+    }
+    const errores = filasInterpretadas.reduce((total, fila) => total + fila.errores.length, 0);
+    document.getElementById("resumenLote").textContent = `${filasInterpretadas.length} fila(s), ${errores} error(es).`;
+    document.getElementById("botonGuardarLote").disabled = !filasInterpretadas.length || errores > 0;
+  }
+
+  async function guardarLote() {
+    mostrarCarga(true, "Creando recibos pendientes…");
+    try {
+      const respuesta = await ejecutarServidor("crearRecibosMasivo", {
+        identificadorTipoRecibo: document.getElementById("tipoRecibo").value,
+        recibos: filasInterpretadas.map(({ cliente, importe, concepto, fechaPago }) => ({ cliente, importe, concepto, fechaPago })),
+      });
+      exigirRespuestaExitosa(respuesta);
+      mostrarMensaje(respuesta.mensaje);
+      limpiarLote();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
+  }
+
+  function limpiarLote() {
+    document.getElementById("datosPegados").value = "";
+    filasInterpretadas = [];
+    renderizarFilasInterpretadas();
+  }
+</script>
