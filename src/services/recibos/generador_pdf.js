@@ -79,12 +79,26 @@ function firmarYGenerarPdf(
         archivoFotografia.getId(),
       );
 
+      const contenidoHtml = plantilla.evaluate().getContent();
+      const imagenesEsperadas = tipoRecibo.identificadorLogotipo ? 3 : 2;
+      validarImagenesHtmlPdf_(contenidoHtml, imagenesEsperadas);
+
+      const contenidoPdf = Utilities.newBlob(
+        contenidoHtml,
+        MimeType.HTML,
+        `${nombreBase}.html`,
+      )
+        .getAs(MimeType.PDF)
+        .setName(`${nombreBase}.pdf`);
+      const diagnosticoImagenes = diagnosticarImagenesPdf_(contenidoPdf);
+      if (diagnosticoImagenes.dimensionMayor < 100) {
+        throw new Error(
+          "El conversor PDF no incorporó las imágenes del recibo. No se guardó un documento incompleto.",
+        );
+      }
+
       const archivoPdf = directorioRecibos.createFile(
-        plantilla
-          .evaluate()
-          .getBlob()
-          .getAs(MimeType.PDF)
-          .setName(`${nombreBase}.pdf`),
+        contenidoPdf,
       );
 
       recibo.identificadorFirma = archivoFirma.getId();
@@ -99,7 +113,12 @@ function firmarYGenerarPdf(
       sincronizarReciboConReporte_(recibo);
 
       return crearRespuestaExitosa_(
-        { recibo, urlPdf: archivoPdf.getUrl() },
+        {
+          recibo,
+          urlPdf: archivoPdf.getUrl(),
+          imagenesEsperadas,
+          imagenesDetectadasPdf: diagnosticoImagenes.cantidadObjetos,
+        },
         "Firma, fotografía y PDF guardados correctamente.",
       );
     } catch (error) {
@@ -113,6 +132,39 @@ function firmarYGenerarPdf(
     return crearRespuestaError_(error);
   } finally {
     if (bloqueo.hasLock()) bloqueo.releaseLock();
+  }
+}
+
+function diagnosticarImagenesPdf_(contenidoPdf) {
+  const bytes = contenidoPdf.getBytes();
+  let contenidoAscii = "";
+  for (let inicio = 0; inicio < bytes.length; inicio += 4096) {
+    const segmento = bytes
+      .slice(inicio, inicio + 4096)
+      .map((valor) => (valor < 0 ? valor + 256 : valor));
+    contenidoAscii += String.fromCharCode(...segmento);
+  }
+  const cantidadObjetos = (
+    contenidoAscii.match(/\/Subtype\s*\/Image/g) || []
+  ).length;
+  const dimensiones = Array.from(
+    contenidoAscii.matchAll(/\/(?:Width|Height)\s+(\d+)/g),
+    (coincidencia) => Number(coincidencia[1]),
+  );
+  return {
+    cantidadObjetos,
+    dimensionMayor: dimensiones.length ? Math.max(...dimensiones) : 0,
+  };
+}
+
+function validarImagenesHtmlPdf_(contenidoHtml, cantidadEsperada) {
+  const coincidencias = String(contenidoHtml || "").match(
+    /src=["']data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+["']/g,
+  ) || [];
+  if (coincidencias.length !== cantidadEsperada) {
+    throw new Error(
+      `La plantilla PDF esperaba ${cantidadEsperada} imagen(es), pero recibió ${coincidencias.length}.`,
+    );
   }
 }
 

@@ -11,7 +11,7 @@
       body { margin: 0; color: #1b1b1b; font-family: Arial, sans-serif; font-size: 11pt; }
       .encabezado { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 3px solid <?!= tipoRecibo.colorPrincipal ?>; }
       .logotipo { max-width: 170px; max-height: 82px; object-fit: contain; }
-      .empresa { margin: 8px 0 0; color: <?!= tipoRecibo.colorPrincipal ?>; font-size: 20pt; }
+      .empresa { margin: 8px 0 0; color: #1b1b1b; font-size: 20pt; }
       .folio { text-align: right; }
       .folio strong { font-size: 12pt; }
       .contenido { margin: 34px 0; white-space: pre-line; line-height: 1.75; }
@@ -27,7 +27,7 @@
     <header class="encabezado">
       <div>
         <? if (logotipoUrlDatos) { ?>
-          <img class="logotipo" src="<?= logotipoUrlDatos ?>" alt="Logotipo" />
+          <img class="logotipo" src="<?!= logotipoUrlDatos ?>" alt="Logotipo" />
         <? } ?>
         <h1 class="empresa"><?= tipoRecibo.nombreEmpresa ?></h1>
       </div>
@@ -40,14 +40,14 @@
     <main>
       <div class="contenido"><?= textoPrincipal ?></div>
       <section class="firma">
-        <img src="<?= firmaUrlDatos ?>" alt="Firma" />
+        <img src="<?!= firmaUrlDatos ?>" alt="Firma" />
         <div class="linea-firma"></div>
         <strong><?= recibo.cliente ?></strong><br />
         <span>Firma de conformidad</span>
       </section>
       <section class="evidencia">
         <p><strong>Evidencia de identificación presencial</strong></p>
-        <img src="<?= fotografiaUrlDatos ?>" alt="Identificación o rostro" />
+        <img src="<?!= fotografiaUrlDatos ?>" alt="Identificación o rostro" />
       </section>
     </main>
 
