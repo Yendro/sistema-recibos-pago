@@ -1,5 +1,9 @@
 {
+  "name": "sistema-recibos-pagos",
   "private": true,
+  "scripts": {
+    "verificar": "node scripts/verificar_proyecto.js"
+  },
   "devDependencies": {
     "@types/google-apps-script": "^2.0.8"
   }

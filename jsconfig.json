@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2020",
     "module": "CommonJS",
     "checkJs": true,
     "noImplicitAny": false,
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["**/*.js", "**/*.gs", "**/*.html"]
+  "include": ["src/**/*.js", "src/**/*.gs"]
 }

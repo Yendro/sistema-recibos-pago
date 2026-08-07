@@ -1,0 +1,123 @@
+const sistemaArchivos = require("node:fs");
+const rutas = require("node:path");
+
+const directorioProyecto = rutas.resolve(__dirname, "..");
+const errores = [];
+
+function recorrerArchivos(directorio, filtro) {
+  const resultados = [];
+  for (const entrada of sistemaArchivos.readdirSync(directorio, {
+    withFileTypes: true,
+  })) {
+    const rutaCompleta = rutas.join(directorio, entrada.name);
+    if (entrada.isDirectory()) resultados.push(...recorrerArchivos(rutaCompleta, filtro));
+    else if (filtro(rutaCompleta)) resultados.push(rutaCompleta);
+  }
+  return resultados;
+}
+
+function validarJavaScript(contenido, rutaArchivo) {
+  try {
+    new Function(contenido);
+  } catch (error) {
+    errores.push(`${rutas.relative(directorioProyecto, rutaArchivo)}: ${error.message}`);
+  }
+}
+
+const archivosServidor = recorrerArchivos(
+  rutas.join(directorioProyecto, "src"),
+  (rutaArchivo) => rutaArchivo.endsWith(".js"),
+);
+archivosServidor.forEach((rutaArchivo) =>
+  validarJavaScript(sistemaArchivos.readFileSync(rutaArchivo, "utf8"), rutaArchivo),
+);
+
+const funcionesPublicasPermitidas = new Set([
+  "doGet",
+  "inicializarSistemaPruebas",
+  "diagnosticarSistema",
+  "obtenerResumenInicio",
+  "obtenerConfiguracionParaWeb",
+  "guardarTipoRecibo",
+  "guardarContacto",
+  "crearRecibosMasivo",
+  "listarRecibos",
+  "obtenerReciboParaFirma",
+  "firmarYGenerarPdf",
+  "enviarReciboPorCorreo",
+  "obtenerUrlReporteGeneral",
+]);
+
+archivosServidor.forEach((rutaArchivo) => {
+  const contenido = sistemaArchivos.readFileSync(rutaArchivo, "utf8");
+  const patronFuncion = /^function\s+([A-Za-zÁÉÍÓÚáéíóúÑñ0-9_]+)\s*\(/gm;
+  for (const coincidencia of contenido.matchAll(patronFuncion)) {
+    const nombreFuncion = coincidencia[1];
+    if (
+      !nombreFuncion.endsWith("_") &&
+      !funcionesPublicasPermitidas.has(nombreFuncion)
+    ) {
+      errores.push(
+        `${rutas.relative(directorioProyecto, rutaArchivo)}: la función pública ${nombreFuncion} no está permitida.`,
+      );
+    }
+  }
+});
+
+const directorioScriptsVista = rutas.join(
+  directorioProyecto,
+  "src",
+  "views",
+  "scripts",
+);
+const archivosScriptsVista = recorrerArchivos(
+  directorioScriptsVista,
+  (rutaArchivo) => rutaArchivo.endsWith(".html"),
+);
+archivosScriptsVista.forEach((rutaArchivo) => {
+  const contenido = sistemaArchivos.readFileSync(rutaArchivo, "utf8");
+  const coincidencia = contenido.match(/^\s*<script>([\s\S]*)<\/script>\s*$/);
+  if (!coincidencia) {
+    errores.push(`${rutas.relative(directorioProyecto, rutaArchivo)}: debe contener una sola etiqueta script.`);
+    return;
+  }
+  validarJavaScript(coincidencia[1], rutaArchivo);
+});
+
+const referenciasProhibidas = [
+  "DocumentApp",
+  "FormApp",
+  "ANYONE_ANONYMOUS",
+  "NOMBRE_HOJA_SOLICITUDES",
+];
+const archivosAplicacion = recorrerArchivos(
+  rutas.join(directorioProyecto, "src"),
+  () => true,
+);
+archivosAplicacion.forEach((rutaArchivo) => {
+  const contenido = sistemaArchivos.readFileSync(rutaArchivo, "utf8");
+  referenciasProhibidas.forEach((referencia) => {
+    if (contenido.includes(referencia)) {
+      errores.push(`${rutas.relative(directorioProyecto, rutaArchivo)}: conserva la referencia prohibida ${referencia}.`);
+    }
+  });
+});
+
+const manifiesto = JSON.parse(
+  sistemaArchivos.readFileSync(rutas.join(directorioProyecto, "appsscript.json"), "utf8"),
+);
+if (manifiesto.webapp?.access !== "MYSELF") {
+  errores.push("appsscript.json: la aplicación web debe conservar acceso MYSELF.");
+}
+if (manifiesto.webapp?.executeAs !== "USER_DEPLOYING") {
+  errores.push("appsscript.json: la aplicación web debe ejecutarse como USER_DEPLOYING.");
+}
+
+if (errores.length) {
+  console.error("La verificación encontró problemas:\n" + errores.map((error) => `- ${error}`).join("\n"));
+  process.exitCode = 1;
+} else {
+  console.log(
+    `Verificación correcta: ${archivosServidor.length} archivos de servidor y ${archivosScriptsVista.length} scripts de interfaz.`,
+  );
+}

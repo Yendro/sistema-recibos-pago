@@ -11,6 +11,8 @@
 # Ignore even valid files if in:
 .git/**
 node_modules/**
+scripts/**
+tests/**
 
 # Python virtual environments:
 .venv/**
