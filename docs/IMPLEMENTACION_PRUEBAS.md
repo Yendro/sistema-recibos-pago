@@ -41,18 +41,25 @@ proyecto de pruebas.
 Ejecuta esta función una sola vez desde el editor de Apps Script. Google pedirá
 autorización para Drive, Sheets y envío de correo.
 
-La función es idempotente y puede volver a ejecutarse para reparar elementos
-faltantes. Crea:
+La función es idempotente y debe volver a ejecutarse después de instalar esta
+versión. Crea o migra:
 
-- El directorio raíz `Sistema Recibos Pagos`.
+- El directorio raíz `Sistema Recibos Pagos` dentro de la carpeta que contiene
+  el proyecto independiente de Apps Script.
 - Directorios de configuración, logos, datos, recibos y evidencias.
 - `configuracion.json`.
 - `tipos-recibo.json` con un tipo general inicial.
 - `contactos.json`.
+- `indice-recibos.json`, reconstruido a partir de los archivos mensuales.
 - El reporte `Reporte General de Recibos`.
 - Las propiedades con todos los identificadores.
 
-No ejecutes esta función desde el proyecto de producción anterior.
+Si Apps Script no logra detectar su carpeta, abre `?ruta=configuracion`, despliega
+la opción avanzada y proporciona la URL de la carpeta contenedora. La aplicación
+no volverá silenciosamente a la raíz de Mi unidad.
+
+La migración mueve la carpeta raíz existente y conserva los identificadores de
+sus archivos y subdirectorios.
 
 ### `diagnosticarSistema()`
 
@@ -60,7 +67,8 @@ Ejecútala después de inicializar. El resultado debe mostrar:
 
 ```text
 inicializado: true
-versionEsperada: 3
+versionEsperada: 4
+directorioRaizEnContenedor: true
 ```
 
 Todas las verificaciones de identificadores deben tener `configurado: true`.
@@ -81,14 +89,11 @@ dispositivos donde la cuenta propietaria tenga una sesión iniciada.
 
 ## 5. Validar las rutas directamente
 
-Abre cada URL reemplazando `URL_IMPLEMENTACION`:
+Abre las dos rutas reemplazando `URL_IMPLEMENTACION`:
 
 ```text
-URL_IMPLEMENTACION?ruta=inicio
+URL_IMPLEMENTACION?ruta=operacion
 URL_IMPLEMENTACION?ruta=configuracion
-URL_IMPLEMENTACION?ruta=nuevo-recibo
-URL_IMPLEMENTACION?ruta=firmas
-URL_IMPLEMENTACION?ruta=recibos
 ```
 
 ## 6. Secuencia de prueba funcional
@@ -97,30 +102,28 @@ URL_IMPLEMENTACION?ruta=recibos
 2. Edita el tipo general o crea GLR y PV.
 3. Carga un logotipo, define proveedor, prefijo y tamaño de papel.
 4. Registra al menos un contacto.
-5. Abre `?ruta=nuevo-recibo` desde una computadora.
-6. Pega cuatro columnas desde Excel o Sheets:
+5. Abre `?ruta=operacion` desde una computadora.
+6. Captura directamente una fila o selecciona **Pegar desde hoja** para
+   incorporar cuatro columnas:
 
    ```text
    Cliente | Importe | Concepto | Fecha de pago
    ```
 
 7. Revisa la tabla y crea el lote.
-8. Abre `?ruta=firmas` desde la tableta.
+8. En la misma ruta selecciona **Pendientes** desde la tableta.
 9. Firma dentro del recibo y toma la fotografía.
 10. Confirma y verifica el PDF guardado en Drive.
-11. Abre `?ruta=recibos`, selecciona Enviar y elige contactos.
+11. El sistema abrirá **Historial**; selecciona los contactos y envía.
 12. Comprueba el correo y la fila del reporte general.
 
 ## 7. Integración con Google Sites
 
-Crea una página de inserción completa para cada ruta y utiliza el sidebar nativo
-de Google Sites:
+Crea dos páginas de inserción completa y utiliza el sidebar nativo de Google
+Sites:
 
 ```text
-Inicio         → ?ruta=inicio
-Crear recibos → ?ruta=nuevo-recibo
-Firmas         → ?ruta=firmas
-Recibos        → ?ruta=recibos
+Operación      → ?ruta=operacion
 Configuración  → ?ruta=configuracion
 ```
 
@@ -138,6 +141,9 @@ Script. Antes de continuar con más funciones se deben revisar visualmente:
 - Posición y resolución de la firma.
 - Posición y legibilidad de la fotografía.
 - Coincidencia entre la vista web y el PDF.
+- Presencia del logotipo, firma y fotografía. Si el conversor no detecta una
+  imagen de dimensiones reales, el recibo queda en `ERROR_PDF` y no se guarda
+  un PDF incompleto.
 
 Si la conversión nativa no conserva el diseño requerido, el repositorio ya
 separa la plantilla de los datos para sustituir únicamente el generador PDF.

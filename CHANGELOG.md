@@ -18,6 +18,21 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Firma sobre el recibo, captura de evidencia y generación directa de PDF.
 - Envío del PDF a contactos validados.
 - Verificación estática local e instructivo de implementación aislada.
+- Cuadrícula editable para captura manual y pegado desde hojas de cálculo.
+- Índice operativo de recibos y caché de lecturas frecuentes.
+- Material Symbols y paleta clara de alto contraste basada en `#379FFF`.
+- Diagnóstico de imágenes antes y después de convertir el recibo a PDF.
+
+### Modificado
+
+- Las dependencias se crean dentro de la carpeta que contiene el proyecto de
+  Apps Script; las instalaciones existentes se mueven sin cambiar sus IDs.
+- Captura, pendientes de firma, historial y correo comparten la ruta
+  `?ruta=operacion`.
+- Las cargas de lectura ya no bloquean toda la pantalla y los procesos rápidos
+  no muestran indicadores intermitentes.
+- Los componentes utilizan radios sutiles en lugar de formas semicirculares.
+- Las imágenes internas del PDF evitan el escape contextual de HTML Service.
 
 ### Eliminado
 

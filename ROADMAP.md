@@ -11,14 +11,19 @@
 ## Fase 1 — Flujo funcional
 
 - [x] Inicialización automática de directorios y archivos.
+- [x] Ubicación de dependencias dentro de la carpeta del proyecto Apps Script.
 - [x] Configuración de tipos de recibo y contactos.
 - [x] Creación masiva mediante datos tabulados.
+- [x] Captura manual y masiva mediante cuadrícula editable.
 - [x] Bandeja de recibos pendientes.
 - [x] Firma integrada en la representación del recibo.
 - [x] Captura y compresión de evidencia.
 - [x] Generación directa de PDF.
 - [x] Envío a contactos configurados.
 - [x] Reporte derivado en Sheets.
+- [x] Ruta operativa unificada para captura, firma, consulta y envío.
+- [x] Índice de recibos y caché de configuración y resumen.
+- [x] Tema claro de alto contraste e iconos Material Symbols.
 - [ ] Validar visualmente el PDF generado por Apps Script.
 
 ## Fase 2 — Robustecimiento
@@ -28,7 +33,7 @@
 - [ ] Añadir anulación y reenvío controlado.
 - [ ] Añadir sincronización pendiente del reporte.
 - [ ] Añadir pruebas automatizadas del dominio.
-- [ ] Medir tiempos en PC y tableta.
+- [ ] Medir tiempos reales del despliegue en PC y tableta.
 
 ## Fase 3 — Liberación
 
