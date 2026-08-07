@@ -35,6 +35,9 @@ migración de Google Sites.
 Consulta [la guía de implementación de pruebas](docs/IMPLEMENTACION_PRUEBAS.md)
 antes de ejecutar `clasp push`.
 
+La [paleta para Google Sites](docs/PALETA_GOOGLE_SITES.md) documenta los colores
+de la aplicación y su uso recomendado en el sitio contenedor.
+
 ## Verificación local
 
 ```bash

@@ -22,6 +22,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Índice operativo de recibos y caché de lecturas frecuentes.
 - Material Symbols y paleta clara de alto contraste basada en `#379FFF`.
 - Diagnóstico de imágenes antes y después de convertir el recibo a PDF.
+- Eliminación segura de contactos y tipos de recibo sin referencias históricas.
 
 ### Modificado
 
@@ -33,12 +34,18 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   no muestran indicadores intermitentes.
 - Los componentes utilizan radios sutiles en lugar de formas semicirculares.
 - Las imágenes internas del PDF evitan el escape contextual de HTML Service.
+- La conversión del PDF parte de `HtmlOutput` y reutiliza las evidencias recibidas
+  para evitar lecturas adicionales de Drive.
+- La captura manual cambia de tabla a tarjetas editables en pantallas de tableta.
+- La interfaz utiliza una paleta Material basada en Google Blue, superficies
+  neutras y `#379FFF` como color de acento.
 
 ### Eliminado
 
 - Integración con Google Forms y módulo de solicitudes.
 - Generación y vista previa mediante Google Docs.
 - Edición de recibos y configuración directamente desde Sheets.
+- Indicador visual `PRUEBAS` del encabezado.
 
 ## [1.1.1] - 2026-06-02
 

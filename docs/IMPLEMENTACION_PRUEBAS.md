@@ -116,6 +116,11 @@ URL_IMPLEMENTACION?ruta=configuracion
 10. Confirma y verifica el PDF guardado en Drive.
 11. El sistema abrirá **Historial**; selecciona los contactos y envía.
 12. Comprueba el correo y la fila del reporte general.
+13. Repite la firma con un tipo A4 que tenga logotipo y comprueba que el PDF
+    muestre logotipo, firma y fotografía.
+14. Crea un contacto temporal, edítalo y elimínalo desde **Configuración**.
+15. Crea un tipo temporal sin recibos y elimínalo. Comprueba también que un tipo
+    ya utilizado no se pueda borrar y sí se pueda desactivar.
 
 ## 7. Integración con Google Sites
 
