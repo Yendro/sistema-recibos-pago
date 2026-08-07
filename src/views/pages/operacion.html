@@ -98,7 +98,14 @@
   </section>
 
   <section id="seccionFirmas" class="panel-operacion oculto">
-    <div id="bandejaFirmas" class="rejilla rejilla-dos seccion">
+    <div id="bandejaFirmas" class="seccion">
+      <aside class="aviso-operativo" aria-label="Información sobre la firma presencial">
+        <span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+        <div>
+          <strong>Firma presencial</strong>
+          <span>La firma y la fotografía se revisan antes de generar el PDF.</span>
+        </div>
+      </aside>
       <article class="tarjeta">
         <div class="encabezado-seccion">
           <div><h2>Pendientes de firma</h2><p class="texto-secundario texto-pequeno">Selecciona un recibo para abrirlo.</p></div>
@@ -108,13 +115,6 @@
           </button>
         </div>
         <div id="listaPendientesFirma" class="lista-recibos"></div>
-      </article>
-      <article class="tarjeta tarjeta-informativa">
-        <span class="material-symbols-outlined icono-grande" aria-hidden="true">photo_camera</span>
-        <h2>Firma presencial</h2>
-        <p class="texto-secundario">
-          La firma y la fotografía se revisan dentro del recibo antes de generar el PDF.
-        </p>
       </article>
     </div>
 
@@ -160,12 +160,12 @@
       <div class="filtros-recibos">
         <div class="campo"><label for="busquedaRecibos">Buscar</label><input id="busquedaRecibos" placeholder="Folio, cliente o concepto" /></div>
         <div class="campo"><label for="estadoRecibos">Estado</label><select id="estadoRecibos"><option value="">Todos</option><option value="PENDIENTE_FIRMA">Pendiente de firma</option><option value="FIRMADO">Pendiente de envío</option><option value="ENVIADO">Enviado</option><option value="ERROR_PDF">Error de PDF</option><option value="ERROR_ENVIO">Error de envío</option></select></div>
-        <button id="botonBuscarRecibos" class="boton boton-tonal" type="button">
+        <button id="botonBuscarRecibos" class="boton boton-tonal boton-compacto" type="button">
           <span class="material-symbols-outlined" aria-hidden="true">search</span> Buscar
         </button>
       </div>
       <div class="tabla-contenedor">
-        <table>
+        <table class="tabla-historial">
           <thead><tr><th>Folio</th><th>Cliente</th><th>Tipo</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody id="tablaRecibos"></tbody>
         </table>
@@ -193,5 +193,6 @@
 <dialog id="dialogoCorreo" class="dialogo-material">
   <div class="encabezado-dialogo"><div><h2>Enviar recibo</h2><p class="texto-secundario texto-pequeno">Selecciona los destinatarios configurados.</p></div><button id="botonCancelarCorreo" class="boton-icono" type="button" aria-label="Cerrar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
   <div id="contactosCorreo" class="lista-contactos"></div>
-  <div class="acciones"><button id="botonEnviarCorreo" class="boton boton-primario" type="button"><span class="material-symbols-outlined" aria-hidden="true">mail</span> Enviar PDF</button></div>
+  <div id="estadoEnvioCorreo" class="estado-proceso-dialogo oculto" role="status" aria-live="polite"></div>
+  <div class="acciones acciones-dialogo"><button id="botonEnviarCorreo" class="boton boton-primario" type="button"><span class="material-symbols-outlined" aria-hidden="true">mail</span> Enviar PDF</button></div>
 </dialog>
