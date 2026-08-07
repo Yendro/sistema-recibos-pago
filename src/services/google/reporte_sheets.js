@@ -1,35 +1,62 @@
 function sincronizarReciboConReporte_(recibo) {
   try {
-    const identificadorReporte = obtenerPropiedadObligatoria_(
-      CLAVES_PROPIEDADES.HOJA_REPORTE,
-    );
-    const hoja = SpreadsheetApp.openById(identificadorReporte).getSheetByName(
-      "Recibos",
-    );
-    if (!hoja) throw new Error("La hoja Recibos no existe en el reporte.");
-
-    const fila = convertirReciboEnFilaReporte_(recibo);
-    const ultimaFila = hoja.getLastRow();
-    let numeroFila = 0;
-    if (ultimaFila > 1) {
-      const identificadores = hoja
-        .getRange(2, 1, ultimaFila - 1, 1)
-        .getDisplayValues()
-        .flat();
-      const posicion = identificadores.indexOf(recibo.identificadorRecibo);
-      if (posicion >= 0) numeroFila = posicion + 2;
-    }
-
-    if (numeroFila) {
-      hoja
-        .getRange(numeroFila, 1, 1, CABECERAS_REPORTE.length)
-        .setValues([fila]);
-    } else {
-      hoja.appendRow(fila);
-    }
+    guardarReciboEnReporte_(recibo);
   } catch (error) {
     console.error(`No se pudo sincronizar el reporte: ${error.message}`);
   }
+}
+
+function obtenerHojaRecibosReporte_() {
+  const identificadorReporte = obtenerPropiedadObligatoria_(
+    CLAVES_PROPIEDADES.HOJA_REPORTE,
+  );
+  const hoja = SpreadsheetApp.openById(identificadorReporte).getSheetByName(
+    "Recibos",
+  );
+  if (!hoja) throw new Error("La hoja Recibos no existe en el reporte.");
+  return hoja;
+}
+
+function buscarNumeroFilaReciboReporte_(hoja, identificadorRecibo) {
+  const ultimaFila = hoja.getLastRow();
+  if (ultimaFila <= 1) return 0;
+  const identificadores = hoja
+    .getRange(2, 1, ultimaFila - 1, 1)
+    .getDisplayValues()
+    .flat();
+  const posicion = identificadores.indexOf(identificadorRecibo);
+  return posicion >= 0 ? posicion + 2 : 0;
+}
+
+function guardarReciboEnReporte_(recibo) {
+  const hoja = obtenerHojaRecibosReporte_();
+  const fila = convertirReciboEnFilaReporte_(recibo);
+  const numeroFila = buscarNumeroFilaReciboReporte_(
+    hoja,
+    recibo.identificadorRecibo,
+  );
+  if (numeroFila) {
+    hoja
+      .getRange(numeroFila, 1, 1, CABECERAS_REPORTE.length)
+      .setValues([fila]);
+  } else {
+    hoja.appendRow(fila);
+  }
+}
+
+/**
+ * Retira una fila por su identificador estable. La ausencia de una fila es
+ * válida porque los recibos pendientes todavía no se escriben en el reporte.
+ *
+ * @param {string} identificadorRecibo Identidad del recibo eliminado.
+ * @returns {boolean} Verdadero cuando se eliminó una fila existente.
+ */
+function eliminarReciboDeReporte_(identificadorRecibo) {
+  const hoja = obtenerHojaRecibosReporte_();
+  const numeroFila = buscarNumeroFilaReciboReporte_(hoja, identificadorRecibo);
+  if (!numeroFila) return false;
+  hoja.deleteRow(numeroFila);
+  return true;
 }
 
 function convertirReciboEnFilaReporte_(recibo) {

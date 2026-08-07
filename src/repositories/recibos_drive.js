@@ -377,6 +377,142 @@ function listarRecibos(criterios) {
   }
 }
 
+/**
+ * Elimina únicamente recibos que todavía no fueron enviados. La operación
+ * actualiza el archivo mensual, el índice y el reporte bajo un solo bloqueo.
+ *
+ * @param {string} identificadorRecibo Identidad estable del recibo.
+ * @returns {Object} Resultado normalizado para la interfaz.
+ */
+function eliminarReciboNoEnviado(identificadorRecibo) {
+  const bloqueo = LockService.getScriptLock();
+  try {
+    if (!identificadorRecibo) {
+      throw new Error("Selecciona el recibo que deseas eliminar.");
+    }
+    bloqueo.waitLock(30000);
+    const resultado = encontrarRecibo_(identificadorRecibo);
+    const recibo = JSON.parse(JSON.stringify(resultado.recibo));
+    if (recibo.estado === ESTADOS_RECIBO.ENVIADO) {
+      throw new Error("Un recibo enviado no puede eliminarse.");
+    }
+
+    const documentoRecibosAnterior = JSON.parse(
+      JSON.stringify(resultado.documento),
+    );
+    const indice = leerIndiceRecibos_();
+    const documentoIndiceAnterior = JSON.parse(
+      JSON.stringify(indice.documento),
+    );
+    let filaReporteEliminada = false;
+
+    try {
+      resultado.documento.version = Number(resultado.documento.version || 0) + 1;
+      resultado.documento.recibos.splice(resultado.posicion, 1);
+      guardarArchivoJsonPorIdentificador_(
+        resultado.referencia.identificadorArchivo,
+        resultado.documento,
+      );
+
+      const recibosIndiceActualizados = indice.recibos.filter(
+        (elemento) => elemento.identificadorRecibo !== identificadorRecibo,
+      );
+      guardarIndiceRecibos_(indice.documento, recibosIndiceActualizados);
+      filaReporteEliminada = eliminarReciboDeReporte_(identificadorRecibo);
+    } catch (error) {
+      restaurarEliminacionRecibo_(
+        resultado.referencia.identificadorArchivo,
+        documentoRecibosAnterior,
+        documentoIndiceAnterior,
+        recibo,
+        filaReporteEliminada,
+      );
+      throw new Error(
+        `No fue posible eliminar el recibo; se restauraron sus datos. ${error.message}`,
+      );
+    }
+
+    const limpieza = enviarArchivosReciboPapelera_(recibo);
+    return crearRespuestaExitosa_(
+      {
+        identificadorRecibo,
+        folio: recibo.folio,
+        estadoAnterior: recibo.estado,
+        archivosEnviadosPapelera: limpieza.enviados,
+        archivosNoLocalizados: limpieza.noLocalizados,
+      },
+      `El recibo ${recibo.folio} fue eliminado.`,
+    );
+  } catch (error) {
+    return crearRespuestaError_(error);
+  } finally {
+    if (bloqueo.hasLock()) bloqueo.releaseLock();
+  }
+}
+
+function restaurarEliminacionRecibo_(
+  identificadorArchivoRecibos,
+  documentoRecibosAnterior,
+  documentoIndiceAnterior,
+  recibo,
+  filaReporteEliminada,
+) {
+  const errores = [];
+  try {
+    guardarArchivoJsonPorIdentificador_(
+      identificadorArchivoRecibos,
+      documentoRecibosAnterior,
+    );
+  } catch (error) {
+    errores.push(`archivo mensual: ${error.message}`);
+  }
+  try {
+    guardarArchivoJsonPorPropiedad_(
+      CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
+      documentoIndiceAnterior,
+    );
+    invalidarMemoriaTemporalResumenRecibos_();
+  } catch (error) {
+    errores.push(`índice: ${error.message}`);
+  }
+  if (filaReporteEliminada) {
+    try {
+      guardarReciboEnReporte_(recibo);
+    } catch (error) {
+      errores.push(`reporte: ${error.message}`);
+    }
+  }
+  if (errores.length) {
+    throw new Error(`La restauración requiere revisión: ${errores.join("; ")}`);
+  }
+}
+
+function enviarArchivosReciboPapelera_(recibo) {
+  const identificadores = Array.from(
+    new Set([
+      recibo.identificadorPdf,
+      recibo.identificadorFirma,
+      recibo.identificadorFotografia,
+    ].filter(Boolean)),
+  );
+  return identificadores.reduce(
+    (resultado, identificadorArchivo) => {
+      try {
+        const archivo = DriveApp.getFileById(identificadorArchivo);
+        if (!archivo.isTrashed()) archivo.setTrashed(true);
+        resultado.enviados += 1;
+      } catch (error) {
+        resultado.noLocalizados += 1;
+        console.warn(
+          `No se localizó un archivo asociado al recibo ${recibo.folio}: ${identificadorArchivo}.`,
+        );
+      }
+      return resultado;
+    },
+    { enviados: 0, noLocalizados: 0 },
+  );
+}
+
 function encontrarRecibo_(identificadorRecibo) {
   const referenciaIndice = leerIndiceRecibos_().recibos.find(
     (recibo) => recibo.identificadorRecibo === identificadorRecibo,

@@ -56,6 +56,11 @@ function firmarYGenerarPdf(
       ["image/jpeg", "image/png"],
     );
 
+    // Las evidencias quedan vinculadas antes de convertir el PDF. Si el motor
+    // falla, el recibo conserva sus identificadores y puede limpiarse después.
+    recibo.identificadorFirma = archivoFirma.getId();
+    recibo.identificadorFotografia = archivoFotografia.getId();
+
     try {
       const plantilla = HtmlService.createTemplateFromFile(
         "src/views/pdf/recibo",
@@ -104,8 +109,6 @@ function firmarYGenerarPdf(
         contenidoPdf,
       );
 
-      recibo.identificadorFirma = archivoFirma.getId();
-      recibo.identificadorFotografia = archivoFotografia.getId();
       recibo.identificadorPdf = archivoPdf.getId();
       recibo.urlPdf = archivoPdf.getUrl();
       recibo.fechaFirma = obtenerFechaIso_(fechaProceso);
