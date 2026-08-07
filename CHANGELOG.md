@@ -5,6 +5,26 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 
+## [Sin publicar]
+
+### Añadido
+
+- Arquitectura independiente de Google Docs y de la hoja de configuración.
+- Rutas para inicio, recibos, creación masiva, firmas y configuración.
+- Persistencia operativa mensual en archivos JSON de Drive.
+- Inicializador idempotente de directorios, archivos y reporte.
+- Configuración de tipos de recibo, logotipos y contactos desde la web app.
+- Pegado tabulado de múltiples recibos desde Excel o Google Sheets.
+- Firma sobre el recibo, captura de evidencia y generación directa de PDF.
+- Envío del PDF a contactos validados.
+- Verificación estática local e instructivo de implementación aislada.
+
+### Eliminado
+
+- Integración con Google Forms y módulo de solicitudes.
+- Generación y vista previa mediante Google Docs.
+- Edición de recibos y configuración directamente desde Sheets.
+
 ## [1.1.1] - 2026-06-02
 
 ### 🐛 Correcciones (Fixed)
