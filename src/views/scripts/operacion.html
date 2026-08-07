@@ -123,12 +123,15 @@
       crearEntradaCaptura("text", "concepto", datos.concepto, { placeholder: "Concepto del pago", required: "" }),
       crearEntradaCaptura("date", "fechaPago", datos.fechaPago || fechaActualLocal(), { required: "" }),
     ];
-    campos.forEach((campo) => {
+    const etiquetas = ["Cliente", "Importe", "Concepto", "Fecha de pago"];
+    campos.forEach((campo, indice) => {
       const celda = document.createElement("td");
+      celda.dataset.etiqueta = etiquetas[indice];
       celda.append(campo);
       fila.append(celda);
     });
     const celdaAccion = document.createElement("td");
+    celdaAccion.dataset.etiqueta = "Acciones";
     const eliminar = crearBotonIcono("delete", "Eliminar fila");
     eliminar.addEventListener("click", () => {
       fila.remove();
