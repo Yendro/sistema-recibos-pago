@@ -9,8 +9,17 @@
   }
 
   function mostrarCarga(mostrar, texto) {
+    const capa = document.getElementById("capaCarga");
+    window.clearTimeout(mostrarCarga.temporizador);
+    if (!mostrar) {
+      capa.classList.add("oculto");
+      return;
+    }
     document.getElementById("textoCarga").textContent = texto || "Procesando…";
-    document.getElementById("capaCarga").classList.toggle("oculto", !mostrar);
+    mostrarCarga.temporizador = window.setTimeout(
+      () => capa.classList.remove("oculto"),
+      320,
+    );
   }
 
   function mostrarMensaje(mensaje, esError = false) {
@@ -38,6 +47,42 @@
     return elemento;
   }
 
+  function crearIconoMaterial(nombre) {
+    const icono = crearElementoTexto("span", nombre, "material-symbols-outlined");
+    icono.setAttribute("aria-hidden", "true");
+    return icono;
+  }
+
+  function crearBotonIcono(nombreIcono, etiqueta) {
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "boton-icono";
+    boton.setAttribute("aria-label", etiqueta);
+    boton.append(crearIconoMaterial(nombreIcono));
+    return boton;
+  }
+
+  function crearBotonConIcono(nombreIcono, etiqueta, clase) {
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = clase;
+    boton.append(crearIconoMaterial(nombreIcono), document.createTextNode(etiqueta));
+    return boton;
+  }
+
+  function crearEstadoVacio(nombreIcono, texto) {
+    const contenedor = document.createElement("div");
+    contenedor.className = "estado-vacio-con-icono";
+    contenedor.append(crearIconoMaterial(nombreIcono), crearElementoTexto("p", texto, "texto-secundario"));
+    return contenedor;
+  }
+
+  function establecerBotonProcesando(boton, procesando) {
+    boton.disabled = procesando;
+    boton.setAttribute("aria-busy", procesando ? "true" : "false");
+    boton.classList.toggle("procesando", procesando);
+  }
+
   function formatearMoneda(valor) {
     return Number(valor || 0).toLocaleString("es-MX", {
       style: "currency",
@@ -47,7 +92,8 @@
 
   function formatearFecha(valor) {
     if (!valor) return "—";
-    const fecha = new Date(valor);
+    const texto = String(valor);
+    const fecha = new Date(/^\d{4}-\d{2}-\d{2}$/.test(texto) ? `${texto}T12:00:00` : texto);
     return Number.isNaN(fecha.getTime())
       ? valor
       : new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(fecha);

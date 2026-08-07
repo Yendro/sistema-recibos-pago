@@ -1,0 +1,197 @@
+<section id="estadoCargaOperacion" class="tarjeta seccion estado-carga-local" aria-live="polite">
+  <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+  Cargando información operativa…
+</section>
+
+<section id="panelSinInicializar" class="tarjeta seccion oculto">
+  <div class="estado-vacio-con-icono">
+    <span class="material-symbols-outlined icono-grande" aria-hidden="true">settings</span>
+    <div>
+      <h2>El sistema necesita actualización</h2>
+      <p class="texto-secundario">
+        Ejecuta <code>inicializarSistemaPruebas()</code> para migrar la estructura
+        y crear el índice operativo de esta versión.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div id="contenidoOperacion" class="oculto">
+  <section class="resumen-compacto seccion" aria-label="Resumen de recibos">
+    <article class="tarjeta tarjeta-resumen-compacta">
+      <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+      <div><span>Pendientes de firma</span><strong id="cantidadPendientesFirma">0</strong></div>
+    </article>
+    <article class="tarjeta tarjeta-resumen-compacta">
+      <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+      <div><span>Pendientes de envío</span><strong id="cantidadPendientesEnvio">0</strong></div>
+    </article>
+    <article class="tarjeta tarjeta-resumen-compacta">
+      <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+      <div><span>Enviados</span><strong id="cantidadEnviados">0</strong></div>
+    </article>
+  </section>
+
+  <nav class="navegacion-operacion seccion" aria-label="Flujo de recibos">
+    <button class="boton-navegacion activo" type="button" data-seccion="nuevo">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      Nuevo recibo
+    </button>
+    <button class="boton-navegacion" type="button" data-seccion="firmas">
+      <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+      Pendientes
+    </button>
+    <button class="boton-navegacion" type="button" data-seccion="historial">
+      <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+      Historial
+    </button>
+  </nav>
+
+  <section id="seccionNuevo" class="panel-operacion">
+    <article class="tarjeta seccion">
+      <div class="encabezado-seccion">
+        <div>
+          <h2>Captura de recibos</h2>
+          <p class="texto-secundario texto-pequeno">
+            Escribe directamente o pega varias filas desde Excel o Google Sheets.
+          </p>
+        </div>
+        <div class="acciones">
+          <button id="botonPegarFilas" class="boton boton-tonal" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">content_paste</span>
+            Pegar desde hoja
+          </button>
+          <button id="botonAgregarFila" class="boton boton-texto" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Agregar fila
+          </button>
+        </div>
+      </div>
+
+      <div class="campo campo-tipo-recibo">
+        <label for="tipoRecibo">Tipo de recibo</label>
+        <select id="tipoRecibo"></select>
+      </div>
+
+      <div class="tabla-contenedor tabla-captura-contenedor">
+        <table class="tabla-captura">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Importe</th>
+              <th>Concepto</th>
+              <th>Fecha de pago</th>
+              <th><span class="solo-lectores-pantalla">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody id="filasCaptura"></tbody>
+        </table>
+      </div>
+      <p id="resumenCaptura" class="texto-secundario texto-pequeno" aria-live="polite"></p>
+      <div class="acciones acciones-principales">
+        <button id="botonCrearRecibos" class="boton boton-primario" type="button">
+          <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+          Crear recibos pendientes
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <section id="seccionFirmas" class="panel-operacion oculto">
+    <div id="bandejaFirmas" class="rejilla rejilla-dos seccion">
+      <article class="tarjeta">
+        <div class="encabezado-seccion">
+          <div><h2>Pendientes de firma</h2><p class="texto-secundario texto-pequeno">Selecciona un recibo para abrirlo.</p></div>
+          <button id="botonActualizarFirmas" class="boton boton-texto" type="button" aria-label="Actualizar pendientes">
+            <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+            Actualizar
+          </button>
+        </div>
+        <div id="listaPendientesFirma" class="lista-recibos"></div>
+      </article>
+      <article class="tarjeta tarjeta-informativa">
+        <span class="material-symbols-outlined icono-grande" aria-hidden="true">photo_camera</span>
+        <h2>Firma presencial</h2>
+        <p class="texto-secundario">
+          La firma y la fotografía se revisan dentro del recibo antes de generar el PDF.
+        </p>
+      </article>
+    </div>
+
+    <div id="panelFirma" class="oculto">
+      <article id="hojaFirma" class="hoja-recibo">
+        <header class="encabezado-recibo">
+          <div><img id="logotipoFirma" class="logotipo-recibo oculto" alt="Logotipo" /><h2 id="empresaFirma" class="titulo-recibo"></h2></div>
+          <div><strong id="folioFirma"></strong><p id="fechaFirmaVista" class="texto-secundario"></p></div>
+        </header>
+        <div id="contenidoFirma" class="contenido-recibo"></div>
+        <section class="zona-firma">
+          <p><strong>Firma de conformidad</strong></p>
+          <canvas id="lienzoFirma" class="lienzo-firma" aria-label="Área para firmar"></canvas>
+        </section>
+        <section class="zona-evidencia">
+          <p><strong>Identificación o evidencia presencial</strong></p>
+          <img id="vistaFotografiaFirma" class="vista-fotografia oculto" alt="Fotografía capturada" />
+          <p id="sinFotografia" class="texto-secundario">Todavía no se ha capturado una fotografía.</p>
+        </section>
+      </article>
+      <div class="barra-firma">
+        <div class="acciones">
+          <button id="botonVolverBandeja" class="boton boton-texto" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Volver
+          </button>
+          <button id="botonLimpiarFirma" class="boton boton-tonal" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span> Limpiar firma
+          </button>
+          <label class="boton boton-tonal" for="archivoFotografiaFirma">
+            <span class="material-symbols-outlined" aria-hidden="true">photo_camera</span> Tomar fotografía
+          </label>
+          <input id="archivoFotografiaFirma" class="oculto" type="file" accept="image/png,image/jpeg" capture="environment" />
+          <button id="botonConfirmarFirma" class="boton boton-primario" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Confirmar y generar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="seccionHistorial" class="panel-operacion oculto">
+    <article class="tarjeta seccion">
+      <div class="filtros-recibos">
+        <div class="campo"><label for="busquedaRecibos">Buscar</label><input id="busquedaRecibos" placeholder="Folio, cliente o concepto" /></div>
+        <div class="campo"><label for="estadoRecibos">Estado</label><select id="estadoRecibos"><option value="">Todos</option><option value="PENDIENTE_FIRMA">Pendiente de firma</option><option value="FIRMADO">Pendiente de envío</option><option value="ENVIADO">Enviado</option><option value="ERROR_PDF">Error de PDF</option><option value="ERROR_ENVIO">Error de envío</option></select></div>
+        <button id="botonBuscarRecibos" class="boton boton-tonal" type="button">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span> Buscar
+        </button>
+      </div>
+      <div class="tabla-contenedor">
+        <table>
+          <thead><tr><th>Folio</th><th>Cliente</th><th>Tipo</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="tablaRecibos"></tbody>
+        </table>
+      </div>
+      <div class="paginacion">
+        <button id="paginaAnterior" class="boton boton-texto" type="button"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span> Anterior</button>
+        <span id="indicadorPagina" class="texto-secundario"></span>
+        <button id="paginaSiguiente" class="boton boton-texto" type="button">Siguiente <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
+      </div>
+    </article>
+  </section>
+</div>
+
+<dialog id="dialogoPegar" class="dialogo-material">
+  <form method="dialog">
+    <div class="encabezado-dialogo">
+      <div><h2>Pegar desde hoja de cálculo</h2><p class="texto-secundario texto-pequeno">Columnas: Cliente, Importe, Concepto y Fecha.</p></div>
+      <button class="boton-icono" value="cancel" aria-label="Cerrar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+    </div>
+    <div class="campo"><label for="datosPegados">Datos tabulados</label><textarea id="datosPegados" spellcheck="false" placeholder="CLIENTE 1&#9;1250.00&#9;PAGO DE SERVICIO&#9;07/08/2026"></textarea></div>
+    <div class="acciones"><button class="boton boton-texto" value="cancel">Cancelar</button><button id="botonImportarFilas" class="boton boton-primario" value="default" type="button"><span class="material-symbols-outlined" aria-hidden="true">content_paste</span> Incorporar filas</button></div>
+  </form>
+</dialog>
+
+<dialog id="dialogoCorreo" class="dialogo-material">
+  <div class="encabezado-dialogo"><div><h2>Enviar recibo</h2><p class="texto-secundario texto-pequeno">Selecciona los destinatarios configurados.</p></div><button id="botonCancelarCorreo" class="boton-icono" type="button" aria-label="Cerrar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+  <div id="contactosCorreo" class="lista-contactos"></div>
+  <div class="acciones"><button id="botonEnviarCorreo" class="boton boton-primario" type="button"><span class="material-symbols-outlined" aria-hidden="true">mail</span> Enviar PDF</button></div>
+</dialog>

@@ -61,31 +61,23 @@ const FORMATOS_PAPEL = Object.freeze({
 });
 
 const RUTAS_APLICACION = Object.freeze({
-  inicio: {
-    titulo: "Inicio",
-    vista: "src/views/pages/inicio",
-    script: "src/views/scripts/inicio",
-  },
-  recibos: {
-    titulo: "Recibos",
-    vista: "src/views/pages/recibos",
-    script: "src/views/scripts/recibos",
-  },
-  "nuevo-recibo": {
-    titulo: "Crear recibos",
-    vista: "src/views/pages/nuevo_recibo",
-    script: "src/views/scripts/nuevo_recibo",
-  },
-  firmas: {
-    titulo: "Firmas",
-    vista: "src/views/pages/firmas",
-    script: "src/views/scripts/firmas",
+  operacion: {
+    titulo: "Operación de recibos",
+    vista: "src/views/pages/operacion",
+    script: "src/views/scripts/operacion",
   },
   configuracion: {
     titulo: "Configuración",
     vista: "src/views/pages/configuracion",
     script: "src/views/scripts/configuracion",
   },
+});
+
+const RUTAS_ANTERIORES = Object.freeze({
+  inicio: "operacion",
+  recibos: "operacion",
+  "nuevo-recibo": "operacion",
+  firmas: "operacion",
 });
 
 const VARIABLES_PLANTILLA_PERMITIDAS = Object.freeze([

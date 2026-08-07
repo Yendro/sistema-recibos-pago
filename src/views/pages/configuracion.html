@@ -1,10 +1,22 @@
+<section id="estadoCargaConfiguracion" class="tarjeta seccion estado-carga-local" aria-live="polite">
+  <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+  Cargando configuración…
+</section>
+
 <section id="panelSinInicializar" class="tarjeta seccion oculto">
   <h2>Instalación pendiente</h2>
   <p class="texto-secundario">
-    Ejecuta primero <code>inicializarSistemaPruebas</code> desde Apps Script. El
-    botón siguiente se ofrece únicamente para reparar un entorno de pruebas.
+    Ejecuta <code>inicializarSistemaPruebas()</code> para crear o migrar la
+    estructura dentro de la carpeta que contiene este proyecto.
   </p>
-  <button id="botonInicializar" class="boton boton-primario" type="button">Inicializar entorno</button>
+  <details class="opciones-avanzadas">
+    <summary>La carpeta no se detectó automáticamente</summary>
+    <div class="campo">
+      <label for="directorioContenedorInicializacion">URL o identificador de la carpeta contenedora</label>
+      <input id="directorioContenedorInicializacion" placeholder="https://drive.google.com/drive/folders/…" />
+    </div>
+  </details>
+  <button id="botonInicializar" class="boton boton-primario" type="button"><span class="material-symbols-outlined" aria-hidden="true">settings</span> Inicializar o migrar</button>
 </section>
 
 <div id="contenidoConfiguracion" class="oculto">
@@ -20,7 +32,7 @@
           <div class="campo"><label for="prefijoFolio">Prefijo</label><input id="prefijoFolio" required maxlength="12" /></div>
           <div class="campo"><label for="formatoPapel">Papel</label><select id="formatoPapel"><option value="CARTA">Carta</option><option value="A4">A4</option></select></div>
         </div>
-        <div class="campo"><label for="colorPrincipal">Color principal</label><input id="colorPrincipal" type="color" value="#6750A4" /></div>
+        <div class="campo"><label for="colorPrincipal">Color principal</label><input id="colorPrincipal" type="color" value="#379FFF" /></div>
         <div class="tarjeta" style="margin-bottom:14px">
           <strong>Texto fijo de la plantilla</strong>
           <p class="texto-secundario texto-pequeno" style="white-space:pre-line">RECIBÍ DE {{Proveedor}}, LA CANTIDAD DE {{Importe}}
@@ -30,8 +42,8 @@ POR CONCEPTO DE: {{Concepto}}</p>
         <div class="campo"><label for="archivoLogotipo">Logotipo PNG o JPEG</label><input id="archivoLogotipo" type="file" accept="image/png,image/jpeg" /></div>
         <label class="campo-en-linea"><input id="tipoReciboActivo" type="checkbox" checked /> Tipo activo</label>
         <div class="acciones">
-          <button id="botonNuevoTipo" class="boton boton-texto" type="button">Limpiar</button>
-          <button class="boton boton-primario" type="submit">Guardar tipo</button>
+          <button id="botonNuevoTipo" class="boton boton-texto" type="button"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Limpiar</button>
+          <button class="boton boton-primario" type="submit"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar tipo</button>
         </div>
       </form>
     </article>
@@ -50,7 +62,7 @@ POR CONCEPTO DE: {{Concepto}}</p>
         <div class="campo"><label for="nombreContacto">Nombre</label><input id="nombreContacto" required /></div>
         <div class="campo"><label for="correoContacto">Correo</label><input id="correoContacto" type="email" required /></div>
         <label class="campo-en-linea"><input id="contactoActivo" type="checkbox" checked /> Contacto activo</label>
-        <div class="acciones"><button class="boton boton-primario" type="submit">Guardar contacto</button></div>
+        <div class="acciones"><button class="boton boton-primario" type="submit"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar contacto</button></div>
       </form>
     </article>
     <article class="tarjeta">
@@ -62,7 +74,7 @@ POR CONCEPTO DE: {{Concepto}}</p>
   <section class="tarjeta">
     <div class="encabezado-seccion">
       <div><h2>Reporte general</h2><p class="texto-secundario texto-pequeno">La aplicación escribe el reporte, pero no lo utiliza como fuente operativa.</p></div>
-      <button id="botonAbrirReporte" class="boton boton-tonal" type="button">Abrir reporte</button>
+      <button id="botonAbrirReporte" class="boton boton-tonal" type="button"><span class="material-symbols-outlined" aria-hidden="true">open_in_new</span> Abrir reporte</button>
     </div>
   </section>
 </div>

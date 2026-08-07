@@ -12,7 +12,7 @@
   });
 
   async function cargarConfiguracion() {
-    mostrarCarga(true, "Cargando configuración…");
+    document.body.classList.add("datos-cargando");
     try {
       const datos = exigirRespuestaExitosa(await ejecutarServidor("obtenerConfiguracionParaWeb"));
       document.getElementById("panelSinInicializar").classList.toggle("oculto", datos.inicializado);
@@ -28,14 +28,18 @@
     } catch (error) {
       mostrarMensaje(error.message, true);
     } finally {
-      mostrarCarga(false);
+      document.body.classList.remove("datos-cargando");
+      document.getElementById("estadoCargaConfiguracion").classList.add("oculto");
     }
   }
 
   async function inicializarEntorno() {
     mostrarCarga(true, "Creando estructura en Drive…");
     try {
-      const respuesta = await ejecutarServidor("inicializarSistemaPruebas");
+      const respuesta = await ejecutarServidor(
+        "inicializarSistemaPruebas",
+        document.getElementById("directorioContenedorInicializacion").value,
+      );
       exigirRespuestaExitosa(respuesta);
       mostrarMensaje(respuesta.mensaje);
       await cargarConfiguracion();
@@ -79,7 +83,7 @@
   function limpiarFormularioTipo() {
     document.getElementById("formularioTipoRecibo").reset();
     document.getElementById("identificadorTipoRecibo").value = "";
-    document.getElementById("colorPrincipal").value = "#6750A4";
+    document.getElementById("colorPrincipal").value = "#379FFF";
     document.getElementById("tipoReciboActivo").checked = true;
   }
 
