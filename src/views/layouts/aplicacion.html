@@ -4,7 +4,7 @@
     <base target="_top" />
     <meta charset="UTF-8" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&amp;icon_names=add,arrow_back,check_circle,chevron_left,chevron_right,close,content_paste,delete,draw,mail,open_in_new,photo_camera,receipt_long,refresh,search,settings&amp;display=block"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&amp;icon_names=add,arrow_back,check_circle,chevron_left,chevron_right,close,content_paste,delete,draw,info,mail,open_in_new,photo_camera,receipt_long,refresh,search,settings&amp;display=block"
       rel="stylesheet"
     />
     <?!= incluir_('src/views/styles/material'); ?>
@@ -25,6 +25,8 @@
     <div id="mensajeGlobal" class="mensaje-global oculto" role="status"></div>
 
     <?!= incluir_('src/views/scripts/core'); ?>
-    <?!= incluir_(archivoScript); ?>
+    <? if (archivoScript) { ?>
+      <?!= incluir_(archivoScript); ?>
+    <? } ?>
   </body>
 </html>

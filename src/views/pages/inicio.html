@@ -1,0 +1,107 @@
+<section class="inicio-bienvenida seccion">
+  <div class="inicio-presentacion">
+    <span class="inicio-icono material-symbols-outlined" aria-hidden="true">receipt_long</span>
+    <div>
+      <h2>Bienvenido al Sistema de Recibos y Pagos</h2>
+      <p>
+        Desde aquí puedes crear recibos, obtener la firma presencial, adjuntar la
+        evidencia fotográfica, generar el PDF y enviarlo por correo.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="rejilla inicio-contenido seccion" aria-labelledby="tituloFlujoPrincipal">
+  <article class="tarjeta inicio-flujo">
+    <div class="encabezado-seccion">
+      <div>
+        <h2 id="tituloFlujoPrincipal">Cómo completar un recibo</h2>
+        <p class="texto-secundario texto-pequeno">
+          El flujo se realiza desde Operación y termina cuando el correo se envía.
+        </p>
+      </div>
+    </div>
+    <ol class="lista-pasos">
+      <li>
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        <div><strong>Crear</strong><span>Captura un recibo o pega varias filas desde una hoja de cálculo.</span></div>
+      </li>
+      <li>
+        <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+        <div><strong>Firmar</strong><span>Abre el recibo pendiente y permite que el cliente firme en la tableta.</span></div>
+      </li>
+      <li>
+        <span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+        <div><strong>Documentar</strong><span>Toma la fotografía de identificación o evidencia presencial.</span></div>
+      </li>
+      <li>
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <div><strong>Confirmar</strong><span>Revisa el recibo y genera el PDF con logotipo, firma y fotografía.</span></div>
+      </li>
+      <li>
+        <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+        <div><strong>Enviar</strong><span>Selecciona los contactos autorizados y envía el PDF por correo.</span></div>
+      </li>
+    </ol>
+  </article>
+
+  <aside class="rejilla inicio-paneles">
+    <article class="tarjeta">
+      <h2>Antes de comenzar</h2>
+      <ul class="lista-verificacion">
+        <li>Confirma que exista el tipo de recibo que vas a utilizar.</li>
+        <li>Revisa el proveedor, logotipo, tamaño de papel y texto de la plantilla.</li>
+        <li>Registra los contactos que recibirán el PDF.</li>
+      </ul>
+      <p class="texto-secundario texto-pequeno">
+        Estos datos se administran desde Configuración.
+      </p>
+    </article>
+
+    <article class="tarjeta inicio-regla-importante">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      <div>
+        <h2>Regla importante</h2>
+        <p>
+          Puedes eliminar un recibo mientras no se haya enviado. Después del
+          envío queda protegido para conservar la trazabilidad.
+        </p>
+      </div>
+    </article>
+  </aside>
+</section>
+
+<section class="tarjeta seccion" aria-labelledby="tituloEstadosRecibo">
+  <div class="encabezado-seccion">
+    <div>
+      <h2 id="tituloEstadosRecibo">Estados del recibo</h2>
+      <p class="texto-secundario texto-pequeno">El historial muestra el avance y las acciones disponibles.</p>
+    </div>
+  </div>
+  <div class="rejilla estados-guia">
+    <div><span class="estado estado-advertencia">Pendiente de firma</span><p>Falta la firma y la fotografía.</p></div>
+    <div><span class="estado estado-advertencia">Pendiente de envío</span><p>El PDF está listo para seleccionar destinatarios.</p></div>
+    <div><span class="estado estado-correcto">Enviado</span><p>El correo se entregó al servicio de Google y el recibo está protegido.</p></div>
+    <div><span class="estado estado-error">Error de PDF</span><p>Revisa las imágenes y vuelve a completar la firma.</p></div>
+    <div><span class="estado estado-error">Error de envío</span><p>Comprueba los contactos y vuelve a intentar el correo.</p></div>
+  </div>
+</section>
+
+<section class="rejilla rejilla-dos seccion">
+  <article class="tarjeta">
+    <h2>Captura manual o masiva</h2>
+    <p>
+      Puedes escribir cada campo directamente. Si ya tienes datos en Excel o
+      Google Sheets, utiliza <strong>Pegar desde hoja</strong> para incorporar
+      varias filas y revisarlas antes de crear los recibos.
+    </p>
+  </article>
+  <article class="tarjeta">
+    <h2>Privacidad de la evidencia</h2>
+    <p>
+      La firma y la fotografía contienen información sensible. Captúralas solo
+      para respaldar el pago y evita compartir los archivos fuera de los
+      destinatarios autorizados.
+    </p>
+  </article>
+</section>

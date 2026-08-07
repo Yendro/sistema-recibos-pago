@@ -61,6 +61,11 @@ const FORMATOS_PAPEL = Object.freeze({
 });
 
 const RUTAS_APLICACION = Object.freeze({
+  inicio: {
+    titulo: "Inicio",
+    vista: "src/views/pages/inicio",
+    script: null,
+  },
   operacion: {
     titulo: "Operación de recibos",
     vista: "src/views/pages/operacion",
@@ -74,7 +79,6 @@ const RUTAS_APLICACION = Object.freeze({
 });
 
 const RUTAS_ANTERIORES = Object.freeze({
-  inicio: "operacion",
   recibos: "operacion",
   "nuevo-recibo": "operacion",
   firmas: "operacion",

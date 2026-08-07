@@ -6,21 +6,23 @@
  * @returns {GoogleAppsScript.HTML.HtmlOutput} Página correspondiente a la ruta.
  */
 function doGet(evento) {
-  const rutaSolicitada = String(evento?.parameter?.ruta || "operacion").trim();
+  const rutaSolicitada = String(evento?.parameter?.ruta || "inicio").trim();
   const nombreRuta = RUTAS_APLICACION[rutaSolicitada]
     ? rutaSolicitada
-    : RUTAS_ANTERIORES[rutaSolicitada] || "operacion";
+    : RUTAS_ANTERIORES[rutaSolicitada] || "inicio";
   const ruta = RUTAS_APLICACION[nombreRuta];
   const plantilla = HtmlService.createTemplateFromFile(
     "src/views/layouts/aplicacion",
   );
   plantilla.nombreAplicacion = NOMBRE_APLICACION;
   plantilla.nombreRuta = nombreRuta;
-  plantilla.seccionInicial = ({
-    firmas: "firmas",
-    recibos: "historial",
-    "nuevo-recibo": "nuevo",
-  })[rutaSolicitada] || "nuevo";
+  plantilla.seccionInicial = nombreRuta === "operacion"
+    ? ({
+      firmas: "firmas",
+      recibos: "historial",
+      "nuevo-recibo": "nuevo",
+    })[rutaSolicitada] || "nuevo"
+    : "";
   plantilla.tituloRuta = ruta.titulo;
   plantilla.archivoVista = ruta.vista;
   plantilla.archivoScript = ruta.script;

@@ -186,8 +186,45 @@
   .opciones-avanzadas summary { cursor: pointer; color: var(--color-primario); font-weight: 650; }
   .opciones-avanzadas .campo { margin: 12px 0 0; }
 
+  .inicio-bienvenida {
+    padding: clamp(24px, 4vw, 42px);
+    color: var(--color-sobre-contenedor-primario);
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-superficie-variante) 100%);
+    border: 1px solid var(--color-borde-suave);
+    border-left: 5px solid var(--color-marca);
+    border-radius: var(--radio-grande);
+    box-shadow: var(--sombra-nivel-1);
+  }
+  .inicio-presentacion { max-width: 920px; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 20px; }
+  .inicio-presentacion h2 { margin: 0 0 10px; color: var(--color-primario-oscuro); font-size: clamp(1.35rem, 3vw, 2rem); font-weight: 600; }
+  .inicio-presentacion p { max-width: 760px; margin: 0; color: var(--color-texto-secundario); line-height: 1.6; }
+  .inicio-icono { padding: 12px; color: var(--color-sobre-primario); background: var(--color-primario); border-radius: var(--radio-grande); font-size: 32px; }
+  .inicio-contenido { grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); align-items: start; }
+  .inicio-paneles { gap: 16px; }
+  .inicio-paneles .tarjeta { box-shadow: none; }
+  .lista-pasos, .lista-verificacion { margin: 0; padding: 0; list-style: none; }
+  .lista-pasos { display: grid; gap: 4px; }
+  .lista-pasos li { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--color-superficie-variante); }
+  .lista-pasos li:last-child { border-bottom: 0; }
+  .lista-pasos .material-symbols-outlined { width: 36px; height: 36px; display: grid; place-items: center; color: var(--color-primario); background: var(--color-contenedor-primario); border-radius: var(--radio-mediano); }
+  .lista-pasos strong, .lista-pasos span:not(.material-symbols-outlined) { display: block; }
+  .lista-pasos strong { margin-bottom: 3px; }
+  .lista-pasos span:not(.material-symbols-outlined) { color: var(--color-texto-secundario); font-size: .88rem; line-height: 1.45; }
+  .lista-verificacion { display: grid; gap: 10px; }
+  .lista-verificacion li { position: relative; padding-left: 22px; line-height: 1.45; }
+  .lista-verificacion li::before { content: "✓"; position: absolute; left: 0; color: var(--color-correcto); font-weight: 800; }
+  .inicio-regla-importante { display: flex; align-items: flex-start; gap: 12px; background: var(--color-superficie-variante); }
+  .inicio-regla-importante > .material-symbols-outlined { color: var(--color-marca); font-size: 24px; }
+  .inicio-regla-importante h2 { margin-bottom: 6px; font-size: 1rem; }
+  .inicio-regla-importante p { margin: 0; color: var(--color-texto-secundario); font-size: .86rem; line-height: 1.45; }
+  .estados-guia { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .estados-guia > div { min-width: 0; padding: 12px; background: var(--color-fondo); border: 1px solid var(--color-borde-suave); border-radius: var(--radio-mediano); }
+  .estados-guia p { margin: 9px 0 0; color: var(--color-texto-secundario); font-size: .82rem; line-height: 1.4; }
+
   @media (max-width: 1100px) {
     .rejilla-configuracion { grid-template-columns: 1fr; }
+    .inicio-contenido { grid-template-columns: 1fr; }
+    .inicio-paneles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
   @media (max-width: 900px) {
@@ -231,5 +268,9 @@
     .tabla-captura .fila-captura td:nth-child(3),
     .tabla-captura .fila-captura td:last-child { grid-column: auto; }
     .acciones .boton { flex: 1 1 auto; }
+    .inicio-bienvenida { padding: 20px 16px; }
+    .inicio-presentacion { grid-template-columns: 1fr; gap: 14px; }
+    .inicio-icono { width: fit-content; }
+    .inicio-paneles { grid-template-columns: 1fr; }
   }
 </style>

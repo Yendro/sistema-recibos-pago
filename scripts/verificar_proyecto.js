@@ -95,8 +95,12 @@ const rutaLayout = rutas.join(
   "aplicacion.html",
 );
 const contenidoLayout = sistemaArchivos.readFileSync(rutaLayout, "utf8");
-const vistasVerificables = ["operacion", "configuracion"];
-vistasVerificables.forEach((nombreVista) => {
+const vistasVerificables = [
+  { nombreVista: "inicio", nombreScript: null },
+  { nombreVista: "operacion", nombreScript: "operacion" },
+  { nombreVista: "configuracion", nombreScript: "configuracion" },
+];
+vistasVerificables.forEach(({ nombreVista, nombreScript }) => {
   const rutaPagina = rutas.join(
     directorioProyecto,
     "src",
@@ -104,14 +108,16 @@ vistasVerificables.forEach((nombreVista) => {
     "pages",
     `${nombreVista}.html`,
   );
+  const contenidoPagina = sistemaArchivos.readFileSync(rutaPagina, "utf8");
+  if (!nombreScript) return;
+
   const rutaScript = rutas.join(
     directorioProyecto,
     "src",
     "views",
     "scripts",
-    `${nombreVista}.html`,
+    `${nombreScript}.html`,
   );
-  const contenidoPagina = sistemaArchivos.readFileSync(rutaPagina, "utf8");
   const contenidoScript = sistemaArchivos.readFileSync(rutaScript, "utf8");
   const identificadores = new Set(
     Array.from(
@@ -131,6 +137,39 @@ vistasVerificables.forEach((nombreVista) => {
     }
   });
 });
+
+const contenidoConstantes = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "config", "constantes.js"),
+  "utf8",
+);
+const contenidoControladorWeb = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "app", "controllers", "web.js"),
+  "utf8",
+);
+const contenidoPaginaInicio = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "pages", "inicio.html"),
+  "utf8",
+);
+if (
+  !contenidoConstantes.includes("inicio: {") ||
+  !contenidoConstantes.includes('vista: "src/views/pages/inicio"') ||
+  !contenidoConstantes.includes("script: null")
+) {
+  errores.push("src/config/constantes.js: la ruta Inicio debe permanecer registrada como vista estática.");
+}
+if (
+  !contenidoControladorWeb.includes('parameter?.ruta || "inicio"') ||
+  !contenidoControladorWeb.includes('RUTAS_ANTERIORES[rutaSolicitada] || "inicio"')
+) {
+  errores.push("src/app/controllers/web.js: Inicio debe ser la ruta predeterminada y de respaldo.");
+}
+if (
+  !contenidoLayout.includes("if (archivoScript)") ||
+  !contenidoPaginaInicio.includes("Bienvenido al Sistema de Recibos y Pagos") ||
+  contenidoPaginaInicio.includes('href="?ruta=')
+) {
+  errores.push("src/views: Inicio debe funcionar sin script ni navegación interna.");
+}
 
 const referenciasProhibidas = [
   "DocumentApp",
