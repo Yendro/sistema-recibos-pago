@@ -20,7 +20,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Verificación estática local e instructivo de implementación aislada.
 - Cuadrícula editable para captura manual y pegado desde hojas de cálculo.
 - Índice operativo de recibos y caché de lecturas frecuentes.
-- Material Symbols y paleta clara de alto contraste basada en `#379FFF`.
+- Material Symbols y paleta clara de alto contraste Nautical Blues.
 - Diagnóstico de imágenes antes y después de convertir el recibo a PDF.
 - Eliminación segura de contactos y tipos de recibo sin referencias históricas.
 - Estado de progreso y error dentro del diálogo de envío por correo.
@@ -38,14 +38,16 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La conversión del PDF parte de `HtmlOutput` y reutiliza las evidencias recibidas
   para evitar lecturas adicionales de Drive.
 - La captura manual cambia de tabla a tarjetas editables en pantallas de tableta.
-- La interfaz utiliza una paleta Material basada en Google Blue, superficies
-  neutras y `#379FFF` como color de acento.
+- La interfaz utiliza los tonos Nautical Blues `#00072D`, `#001C55`,
+  `#0A2472`, `#0E6BA8` y `#A6E1FA` con superficies claras.
 - Historial, captura y configuración utilizan controles compactos y una escala
   tipográfica homogénea.
 - El aviso de firma presencial ocupa una nota breve y la bandeja aprovecha todo
   el ancho disponible.
 - El diálogo de correo bloquea nuevos cambios durante el envío y se cierra al
   finalizar correctamente.
+- Los filtros del historial comparten alineación en escritorio y mantienen una
+  separación uniforme respecto de la tabla.
 
 ### Eliminado
 
