@@ -511,9 +511,83 @@
       enviar.addEventListener("click", () => abrirDialogoCorreo(recibo.identificadorRecibo));
       acciones.append(enviar);
     }
+    if (recibo.estado !== "ENVIADO") {
+      const eliminar = crearBotonConIcono("delete", "Eliminar", "boton boton-texto boton-eliminar");
+      eliminar.addEventListener("click", () => eliminarReciboDesdeHistorial(recibo, eliminar));
+      acciones.append(eliminar);
+    }
     celdaAcciones.append(acciones);
     fila.append(celdaEstado, celdaAcciones);
     return fila;
+  }
+
+  async function eliminarReciboDesdeHistorial(recibo, botonEliminar) {
+    const confirmado = window.confirm(
+      `¿Seguro que quiere eliminar el recibo ${recibo.folio}?\n\nTambién se quitará del reporte y sus archivos se enviarán a la papelera.`,
+    );
+    if (!confirmado) return;
+
+    const fila = botonEliminar.closest("tr");
+    const botonesFila = Array.from(fila.querySelectorAll("button"));
+    botonesFila.forEach((boton) => { boton.disabled = true; });
+    botonEliminar.replaceChildren(
+      crearIconoMaterial("refresh"),
+      document.createTextNode("Eliminando…"),
+    );
+    botonEliminar.classList.add("procesando");
+
+    try {
+      const respuesta = await ejecutarServidor(
+        "eliminarReciboNoEnviado",
+        recibo.identificadorRecibo,
+      );
+      exigirRespuestaExitosa(respuesta);
+
+      estadoOperacion.pendientes = estadoOperacion.pendientes.filter(
+        (elemento) => elemento.identificadorRecibo !== recibo.identificadorRecibo,
+      );
+      estadoOperacion.historial.recibos = estadoOperacion.historial.recibos.filter(
+        (elemento) => elemento.identificadorRecibo !== recibo.identificadorRecibo,
+      );
+      estadoOperacion.historial.total = Math.max(
+        0,
+        estadoOperacion.historial.total - 1,
+      );
+      estadoOperacion.historial.totalPaginas = Math.max(
+        1,
+        Math.ceil(estadoOperacion.historial.total / estadoOperacion.historial.tamanoPagina),
+      );
+      estadoOperacion.historial.pagina = Math.min(
+        estadoOperacion.historial.pagina,
+        estadoOperacion.historial.totalPaginas,
+      );
+
+      if (["PENDIENTE_FIRMA", "ERROR_PDF"].includes(recibo.estado)) {
+        estadoOperacion.resumen.pendientesFirma = Math.max(
+          0,
+          estadoOperacion.resumen.pendientesFirma - 1,
+        );
+      }
+      if (["FIRMADO", "ERROR_ENVIO"].includes(recibo.estado)) {
+        estadoOperacion.resumen.pendientesEnvio = Math.max(
+          0,
+          estadoOperacion.resumen.pendientesEnvio - 1,
+        );
+      }
+
+      renderizarResumen();
+      renderizarPendientesFirma();
+      renderizarHistorial();
+      mostrarMensaje(respuesta.mensaje);
+    } catch (error) {
+      botonesFila.forEach((boton) => { boton.disabled = false; });
+      botonEliminar.replaceChildren(
+        crearIconoMaterial("delete"),
+        document.createTextNode("Eliminar"),
+      );
+      botonEliminar.classList.remove("procesando");
+      mostrarMensaje(error.message, true);
+    }
   }
 
   function traducirEstado(estado) {
