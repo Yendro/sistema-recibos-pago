@@ -6,6 +6,9 @@
     document.getElementById("formularioTipoRecibo").addEventListener("submit", guardarTipoDesdeFormulario);
     document.getElementById("formularioContacto").addEventListener("submit", guardarContactoDesdeFormulario);
     document.getElementById("botonNuevoTipo").addEventListener("click", limpiarFormularioTipo);
+    document.getElementById("botonEliminarTipo").addEventListener("click", eliminarTipoSeleccionado);
+    document.getElementById("botonNuevoContacto").addEventListener("click", limpiarFormularioContacto);
+    document.getElementById("botonEliminarContacto").addEventListener("click", eliminarContactoSeleccionado);
     document.getElementById("botonInicializar").addEventListener("click", inicializarEntorno);
     document.getElementById("botonAbrirReporte").addEventListener("click", abrirReporte);
     cargarConfiguracion();
@@ -78,6 +81,7 @@
     document.getElementById("formatoPapel").value = tipo.formatoPapel;
     document.getElementById("colorPrincipal").value = tipo.colorPrincipal;
     document.getElementById("tipoReciboActivo").checked = tipo.activo;
+    document.getElementById("botonEliminarTipo").classList.remove("oculto");
   }
 
   function limpiarFormularioTipo() {
@@ -85,6 +89,25 @@
     document.getElementById("identificadorTipoRecibo").value = "";
     document.getElementById("colorPrincipal").value = "#379FFF";
     document.getElementById("tipoReciboActivo").checked = true;
+    document.getElementById("botonEliminarTipo").classList.add("oculto");
+  }
+
+  async function eliminarTipoSeleccionado() {
+    const identificador = document.getElementById("identificadorTipoRecibo").value;
+    const tipo = tiposReciboConfigurados.find((elemento) => elemento.identificadorTipoRecibo === identificador);
+    if (!tipo || !window.confirm(`¿Eliminar definitivamente el tipo ${tipo.nombreTipoRecibo}?`)) return;
+    mostrarCarga(true, "Eliminando tipo de recibo…");
+    try {
+      const respuesta = await ejecutarServidor("eliminarTipoRecibo", identificador);
+      exigirRespuestaExitosa(respuesta);
+      limpiarFormularioTipo();
+      mostrarMensaje(respuesta.mensaje);
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
   }
 
   async function guardarTipoDesdeFormulario(evento) {
@@ -145,6 +168,32 @@
     document.getElementById("nombreContacto").value = contacto.nombre;
     document.getElementById("correoContacto").value = contacto.correoOriginal;
     document.getElementById("contactoActivo").checked = contacto.activo;
+    document.getElementById("botonEliminarContacto").classList.remove("oculto");
+  }
+
+  function limpiarFormularioContacto() {
+    document.getElementById("formularioContacto").reset();
+    document.getElementById("identificadorContacto").value = "";
+    document.getElementById("contactoActivo").checked = true;
+    document.getElementById("botonEliminarContacto").classList.add("oculto");
+  }
+
+  async function eliminarContactoSeleccionado() {
+    const identificador = document.getElementById("identificadorContacto").value;
+    const contacto = contactosConfigurados.find((elemento) => elemento.identificadorContacto === identificador);
+    if (!contacto || !window.confirm(`¿Eliminar el contacto ${contacto.nombre}?`)) return;
+    mostrarCarga(true, "Eliminando contacto…");
+    try {
+      const respuesta = await ejecutarServidor("eliminarContacto", identificador);
+      exigirRespuestaExitosa(respuesta);
+      limpiarFormularioContacto();
+      mostrarMensaje(respuesta.mensaje);
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      mostrarCarga(false);
+    }
   }
 
   async function guardarContactoDesdeFormulario(evento) {
@@ -159,9 +208,7 @@
       });
       exigirRespuestaExitosa(respuesta);
       mostrarMensaje(respuesta.mensaje);
-      document.getElementById("formularioContacto").reset();
-      document.getElementById("identificadorContacto").value = "";
-      document.getElementById("contactoActivo").checked = true;
+      limpiarFormularioContacto();
       await cargarConfiguracion();
     } catch (error) {
       mostrarMensaje(error.message, true);

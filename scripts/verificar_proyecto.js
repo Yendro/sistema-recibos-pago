@@ -39,7 +39,9 @@ const funcionesPublicasPermitidas = new Set([
   "obtenerDatosOperacion",
   "obtenerConfiguracionParaWeb",
   "guardarTipoRecibo",
+  "eliminarTipoRecibo",
   "guardarContacto",
+  "eliminarContacto",
   "crearRecibosMasivo",
   "listarRecibos",
   "obtenerReciboParaFirma",
@@ -166,6 +168,14 @@ const plantillaPdf = sistemaArchivos.readFileSync(
 );
 if ((plantillaPdf.match(/src="<\?!=/g) || []).length < 3) {
   errores.push("src/views/pdf/recibo.html: las imágenes deben evitar el escape contextual.");
+}
+
+const generadorPdf = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "services", "recibos", "generador_pdf.js"),
+  "utf8",
+);
+if (!generadorPdf.includes("salidaHtml") || !generadorPdf.includes(".getAs(MimeType.PDF)")) {
+  errores.push("src/services/recibos/generador_pdf.js: el PDF debe convertirse desde HtmlOutput.");
 }
 
 if (errores.length) {

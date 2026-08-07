@@ -20,7 +20,7 @@
 </section>
 
 <div id="contenidoConfiguracion" class="oculto">
-  <section class="rejilla rejilla-dos seccion">
+  <section class="rejilla rejilla-configuracion seccion">
     <article class="tarjeta">
       <h2>Tipo de recibo</h2>
       <form id="formularioTipoRecibo">
@@ -42,7 +42,8 @@ POR CONCEPTO DE: {{Concepto}}</p>
         <div class="campo"><label for="archivoLogotipo">Logotipo PNG o JPEG</label><input id="archivoLogotipo" type="file" accept="image/png,image/jpeg" /></div>
         <label class="campo-en-linea"><input id="tipoReciboActivo" type="checkbox" checked /> Tipo activo</label>
         <div class="acciones">
-          <button id="botonNuevoTipo" class="boton boton-texto" type="button"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Limpiar</button>
+          <button id="botonEliminarTipo" class="boton boton-error oculto" type="button"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Eliminar</button>
+          <button id="botonNuevoTipo" class="boton boton-texto" type="button"><span class="material-symbols-outlined" aria-hidden="true">add</span> Nuevo</button>
           <button class="boton boton-primario" type="submit"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar tipo</button>
         </div>
       </form>
@@ -50,11 +51,11 @@ POR CONCEPTO DE: {{Concepto}}</p>
 
     <article class="tarjeta">
       <h2>Tipos configurados</h2>
-      <div id="listaTiposRecibo" class="rejilla"></div>
+      <div id="listaTiposRecibo" class="rejilla lista-configuracion"></div>
     </article>
   </section>
 
-  <section class="rejilla rejilla-dos seccion">
+  <section class="rejilla rejilla-configuracion seccion">
     <article class="tarjeta">
       <h2>Nuevo contacto</h2>
       <form id="formularioContacto">
@@ -62,12 +63,16 @@ POR CONCEPTO DE: {{Concepto}}</p>
         <div class="campo"><label for="nombreContacto">Nombre</label><input id="nombreContacto" required /></div>
         <div class="campo"><label for="correoContacto">Correo</label><input id="correoContacto" type="email" required /></div>
         <label class="campo-en-linea"><input id="contactoActivo" type="checkbox" checked /> Contacto activo</label>
-        <div class="acciones"><button class="boton boton-primario" type="submit"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar contacto</button></div>
+        <div class="acciones">
+          <button id="botonEliminarContacto" class="boton boton-error oculto" type="button"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Eliminar</button>
+          <button id="botonNuevoContacto" class="boton boton-texto" type="button"><span class="material-symbols-outlined" aria-hidden="true">add</span> Nuevo</button>
+          <button class="boton boton-primario" type="submit"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar contacto</button>
+        </div>
       </form>
     </article>
     <article class="tarjeta">
       <h2>Contactos de envío</h2>
-      <div id="listaContactos" class="rejilla"></div>
+      <div id="listaContactos" class="rejilla lista-configuracion"></div>
     </article>
   </section>
 

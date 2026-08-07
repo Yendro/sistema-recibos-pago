@@ -153,6 +153,66 @@ function guardarTipoRecibo(datosTipoRecibo, logotipoBase64) {
   }
 }
 
+/**
+ * Elimina un tipo que todavía no tenga recibos asociados. Los tipos usados se
+ * conservan para que sus recibos pendientes e históricos sigan siendo legibles.
+ *
+ * @param {string} identificadorTipoRecibo Identidad del tipo por eliminar.
+ * @returns {Object} Respuesta normalizada para la interfaz.
+ */
+function eliminarTipoRecibo(identificadorTipoRecibo) {
+  try {
+    if (!identificadorTipoRecibo) {
+      throw new Error("Selecciona el tipo de recibo que deseas eliminar.");
+    }
+    const bloqueo = LockService.getScriptLock();
+    bloqueo.waitLock(30000);
+    try {
+      const documento = leerArchivoJsonPorPropiedad_(
+        CLAVES_PROPIEDADES.ARCHIVO_TIPOS_RECIBO,
+      );
+      const tiposRecibo = Array.isArray(documento.tiposRecibo)
+        ? documento.tiposRecibo
+        : [];
+      const posicion = tiposRecibo.findIndex(
+        (tipo) => tipo.identificadorTipoRecibo === identificadorTipoRecibo,
+      );
+      if (posicion < 0) throw new Error("El tipo de recibo ya no existe.");
+
+      const estaEnUso = leerIndiceRecibos_().recibos.some(
+        (recibo) => recibo.identificadorTipoRecibo === identificadorTipoRecibo,
+      );
+      if (estaEnUso) {
+        throw new Error(
+          "Este tipo ya tiene recibos asociados. Desactívalo para conservar el historial.",
+        );
+      }
+
+      const [tipoEliminado] = tiposRecibo.splice(posicion, 1);
+      documento.version = Number(documento.version || 0) + 1;
+      documento.tiposRecibo = tiposRecibo;
+      guardarArchivoJsonPorPropiedad_(
+        CLAVES_PROPIEDADES.ARCHIVO_TIPOS_RECIBO,
+        documento,
+      );
+      invalidarMemoriaTemporalConfiguracion_();
+
+      if (tipoEliminado.identificadorLogotipo) {
+        try {
+          DriveApp.getFileById(tipoEliminado.identificadorLogotipo).setTrashed(true);
+        } catch (error) {
+          console.warn("El tipo se eliminó, pero no fue posible enviar su logotipo a la papelera.");
+        }
+      }
+      return crearRespuestaExitosa_(tipoEliminado, "Tipo de recibo eliminado.");
+    } finally {
+      bloqueo.releaseLock();
+    }
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
 function validarVariablesPlantilla_(textoPrincipal) {
   if (!textoPrincipal) throw new Error("El texto del recibo es obligatorio.");
   const coincidencias = textoPrincipal.match(/{{\s*([^{}]+)\s*}}/g) || [];
@@ -226,6 +286,49 @@ function guardarContacto(datosContacto) {
       );
       invalidarMemoriaTemporalConfiguracion_();
       return crearRespuestaExitosa_(contactoNormalizado, "Contacto guardado.");
+    } finally {
+      bloqueo.releaseLock();
+    }
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
+/**
+ * Elimina un contacto de la libreta de destinatarios. Los correos ya enviados
+ * permanecen registrados dentro de cada recibo y en el reporte general.
+ *
+ * @param {string} identificadorContacto Identidad del contacto por eliminar.
+ * @returns {Object} Respuesta normalizada para la interfaz.
+ */
+function eliminarContacto(identificadorContacto) {
+  try {
+    if (!identificadorContacto) {
+      throw new Error("Selecciona el contacto que deseas eliminar.");
+    }
+    const bloqueo = LockService.getScriptLock();
+    bloqueo.waitLock(30000);
+    try {
+      const documento = leerArchivoJsonPorPropiedad_(
+        CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
+      );
+      const contactos = Array.isArray(documento.contactos)
+        ? documento.contactos
+        : [];
+      const posicion = contactos.findIndex(
+        (contacto) => contacto.identificadorContacto === identificadorContacto,
+      );
+      if (posicion < 0) throw new Error("El contacto ya no existe.");
+
+      const [contactoEliminado] = contactos.splice(posicion, 1);
+      documento.version = Number(documento.version || 0) + 1;
+      documento.contactos = contactos;
+      guardarArchivoJsonPorPropiedad_(
+        CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
+        documento,
+      );
+      invalidarMemoriaTemporalConfiguracion_();
+      return crearRespuestaExitosa_(contactoEliminado, "Contacto eliminado.");
     } finally {
       bloqueo.releaseLock();
     }
