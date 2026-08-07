@@ -44,6 +44,7 @@ const funcionesPublicasPermitidas = new Set([
   "eliminarContacto",
   "crearRecibosMasivo",
   "listarRecibos",
+  "eliminarReciboNoEnviado",
   "obtenerReciboParaFirma",
   "firmarYGenerarPdf",
   "enviarReciboPorCorreo",
@@ -176,6 +177,25 @@ const generadorPdf = sistemaArchivos.readFileSync(
 );
 if (!generadorPdf.includes("salidaHtml") || !generadorPdf.includes(".getAs(MimeType.PDF)")) {
   errores.push("src/services/recibos/generador_pdf.js: el PDF debe convertirse desde HtmlOutput.");
+}
+
+const repositorioRecibos = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "repositories", "recibos_drive.js"),
+  "utf8",
+);
+if (
+  !repositorioRecibos.includes("recibo.estado === ESTADOS_RECIBO.ENVIADO") ||
+  !repositorioRecibos.includes("eliminarReciboDeReporte_(identificadorRecibo)")
+) {
+  errores.push("src/repositories/recibos_drive.js: la eliminación debe proteger enviados y limpiar el reporte.");
+}
+
+const interfazOperacion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "scripts", "operacion.html"),
+  "utf8",
+);
+if (!interfazOperacion.includes('recibo.estado !== "ENVIADO"')) {
+  errores.push("src/views/scripts/operacion.html: un recibo enviado no debe mostrar la acción de eliminar.");
 }
 
 if (errores.length) {
