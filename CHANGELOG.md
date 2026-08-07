@@ -23,6 +23,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Material Symbols y paleta clara de alto contraste basada en `#379FFF`.
 - Diagnóstico de imágenes antes y después de convertir el recibo a PDF.
 - Eliminación segura de contactos y tipos de recibo sin referencias históricas.
+- Estado de progreso y error dentro del diálogo de envío por correo.
 
 ### Modificado
 
@@ -39,6 +40,12 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La captura manual cambia de tabla a tarjetas editables en pantallas de tableta.
 - La interfaz utiliza una paleta Material basada en Google Blue, superficies
   neutras y `#379FFF` como color de acento.
+- Historial, captura y configuración utilizan controles compactos y una escala
+  tipográfica homogénea.
+- El aviso de firma presencial ocupa una nota breve y la bandeja aprovecha todo
+  el ancho disponible.
+- El diálogo de correo bloquea nuevos cambios durante el envío y se cierra al
+  finalizar correctamente.
 
 ### Eliminado
 
@@ -46,6 +53,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Generación y vista previa mediante Google Docs.
 - Edición de recibos y configuración directamente desde Sheets.
 - Indicador visual `PRUEBAS` del encabezado.
+- Etiqueta secundaria con el nombre del sistema dentro de cada ruta.
 
 ## [1.1.1] - 2026-06-02
 
