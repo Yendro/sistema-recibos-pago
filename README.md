@@ -10,6 +10,7 @@ computadora o tableta y firma presencial con fotografía de evidencia.
 ## Funcionalidades
 
 - Configuración de tipos de recibo, empresas, proveedores, logotipos y contactos.
+- Inicio con bienvenida, guía de uso y explicación del flujo principal.
 - Captura manual o masiva mediante una cuadrícula editable.
 - Firma sobre la representación visual del recibo.
 - Fotografía obligatoria de identificación o evidencia presencial.
@@ -43,8 +44,8 @@ fuera del alcance actual.
 1. Clona el repositorio y entra en su directorio:
 
    ```bash
-   git clone URL_DEL_REPOSITORIO
-   cd sistema-recibos-pagos
+   git clone https://github.com/Yendro/sistema-recibos-pago.git
+   cd sistema-recibos-pago
    ```
 
 2. Instala las dependencias y verifica el proyecto:
@@ -136,11 +137,14 @@ No se necesitan triggers, Google Forms ni un proyecto vinculado a Sheets.
 Rutas disponibles:
 
 ```text
+URL_IMPLEMENTACION/exec
+URL_IMPLEMENTACION/exec?ruta=inicio
 URL_IMPLEMENTACION/exec?ruta=operacion
 URL_IMPLEMENTACION/exec?ruta=configuracion
 ```
 
-Ambas rutas pueden insertarse como páginas de ancho completo en Google Sites.
+Inicio es también la ruta predeterminada cuando no se proporciona un parámetro.
+Las tres rutas pueden insertarse como páginas de ancho completo en Google Sites.
 El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
 
 ## Primera configuración

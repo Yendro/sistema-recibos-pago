@@ -11,9 +11,6 @@ La fecha prevista de corte es el lunes 10 de agosto de 2026.
 
 - La rama activa es `refactor/reestructuracion-completa`, no `main`.
 - Existen commits locales pendientes de publicar en el remoto.
-- Durante la revisión, `origin` todavía apuntaba a
-  `Yendro/app-recibos-caja-glr.git`; confirma la URL si el repositorio fue
-  renombrado.
 - `[Sin publicar]` debe permanecer así hasta que la versión productiva exista.
 - Cualquier archivo modificado o nuevo debe revisarse y confirmarse antes de la
   integración, incluido material gráfico o documentación local.
@@ -116,10 +113,11 @@ git push origin v2.0.0
 2. Edita la implementación productiva.
 3. Selecciona **Nueva versión** y confirma.
 4. Conserva la URL `/exec` si se actualiza una implementación existente.
-5. Si se crea una implementación distinta, actualiza las dos inserciones en
+5. Si se crea una implementación distinta, actualiza las tres inserciones en
    Google Sites:
 
    ```text
+   Inicio         → URL/exec?ruta=inicio
    Operación      → URL/exec?ruta=operacion
    Configuración  → URL/exec?ruta=configuracion
    ```
@@ -128,7 +126,8 @@ git push origin v2.0.0
 
 Realiza la prueba con datos claramente identificados como control:
 
-- Abrir Operación y Configuración desde Google Sites.
+- Abrir Inicio, Operación y Configuración desde Google Sites.
+- Confirmar que `/exec` sin parámetros muestre la guía de usuario.
 - Confirmar tipos, contactos, logotipos y carpeta raíz.
 - Crear un recibo de importe pequeño.
 - Firmar y capturar fotografía desde la tableta.

@@ -20,6 +20,7 @@
 - [x] Envío a contactos configurados.
 - [x] Reporte derivado en Sheets.
 - [x] Operación unificada para captura, firma, consulta y envío.
+- [x] Ruta de inicio con bienvenida y guía de usuario.
 - [x] Índice de recibos y caché de lecturas frecuentes.
 - [x] Eliminación protegida de recibos no enviados.
 - [x] Interfaz responsive con Material Symbols y Nautical Blues.

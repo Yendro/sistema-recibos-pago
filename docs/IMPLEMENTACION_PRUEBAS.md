@@ -92,12 +92,17 @@ dispositivos donde la cuenta propietaria tenga una sesión iniciada.
 
 ## 5. Validar las rutas directamente
 
-Abre las dos rutas reemplazando `URL_IMPLEMENTACION`:
+Abre las tres rutas reemplazando `URL_IMPLEMENTACION`:
 
 ```text
+URL_IMPLEMENTACION
+URL_IMPLEMENTACION?ruta=inicio
 URL_IMPLEMENTACION?ruta=operacion
 URL_IMPLEMENTACION?ruta=configuracion
 ```
+
+La URL sin parámetros debe mostrar Inicio. La navegación entre páginas se
+realiza exclusivamente desde el sidebar de Google Sites.
 
 ## 6. Secuencia de prueba funcional
 
@@ -133,10 +138,11 @@ URL_IMPLEMENTACION?ruta=configuracion
 
 ## 7. Integración con Google Sites
 
-Crea dos páginas de inserción completa y utiliza el sidebar nativo de Google
+Crea tres páginas de inserción completa y utiliza el sidebar nativo de Google
 Sites:
 
 ```text
+Inicio         → ?ruta=inicio
 Operación      → ?ruta=operacion
 Configuración  → ?ruta=configuracion
 ```
