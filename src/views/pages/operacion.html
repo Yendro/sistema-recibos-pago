@@ -78,8 +78,8 @@
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Importe</th>
               <th>Concepto</th>
+              <th>Importe</th>
               <th>Fecha de pago</th>
               <th><span class="solo-lectores-pantalla">Acciones</span></th>
             </tr>
@@ -182,10 +182,10 @@
 <dialog id="dialogoPegar" class="dialogo-material">
   <form method="dialog">
     <div class="encabezado-dialogo">
-      <div><h2>Pegar desde hoja de cálculo</h2><p class="texto-secundario texto-pequeno">Columnas: Cliente, Importe, Concepto y Fecha.</p></div>
+      <div><h2>Pegar desde hoja de cálculo</h2><p class="texto-secundario texto-pequeno">Columnas: Cliente, Concepto, Importe y Fecha.</p></div>
       <button class="boton-icono" value="cancel" aria-label="Cerrar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
     </div>
-    <div class="campo"><label for="datosPegados">Datos tabulados</label><textarea id="datosPegados" spellcheck="false" placeholder="CLIENTE 1&#9;1250.00&#9;PAGO DE SERVICIO&#9;07/08/2026"></textarea></div>
+    <div class="campo"><label for="datosPegados">Datos tabulados</label><textarea id="datosPegados" spellcheck="false" placeholder="CLIENTE 1&#9;PAGO DE SERVICIO&#9;1250.00&#9;07/08/2026"></textarea></div>
     <div class="acciones"><button class="boton boton-texto" value="cancel">Cancelar</button><button id="botonImportarFilas" class="boton boton-primario" value="default" type="button"><span class="material-symbols-outlined" aria-hidden="true">content_paste</span> Incorporar filas</button></div>
   </form>
 </dialog>

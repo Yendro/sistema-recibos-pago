@@ -122,11 +122,11 @@
     fila.className = "fila-captura";
     const campos = [
       crearEntradaCaptura("text", "cliente", datos.cliente, { placeholder: "Nombre o razón social", required: "" }),
-      crearEntradaCaptura("number", "importe", datos.importe, { min: "0.01", step: "0.01", placeholder: "0.00", required: "" }),
       crearEntradaCaptura("text", "concepto", datos.concepto, { placeholder: "Concepto del pago", required: "" }),
+      crearEntradaCaptura("number", "importe", datos.importe, { min: "0.01", step: "0.01", placeholder: "0.00", required: "" }),
       crearEntradaCaptura("date", "fechaPago", datos.fechaPago || fechaActualLocal(), { required: "" }),
     ];
-    const etiquetas = ["Cliente", "Importe", "Concepto", "Fecha de pago"];
+    const etiquetas = ["Cliente", "Concepto", "Importe", "Fecha de pago"];
     campos.forEach((campo, indice) => {
       const celda = document.createElement("td");
       celda.dataset.etiqueta = etiquetas[indice];
@@ -208,8 +208,8 @@
         if (columnas.length !== 4) throw new Error(`Fila ${indice + 1}: se esperaban cuatro columnas.`);
         const datos = {
           cliente: columnas[0].trim(),
-          importe: interpretarImportePegado(columnas[1]),
-          concepto: columnas[2].trim(),
+          concepto: columnas[1].trim(),
+          importe: interpretarImportePegado(columnas[2]),
           fechaPago: interpretarFechaPegada(columnas[3]),
         };
         if (!datos.cliente || !(datos.importe > 0) || !datos.concepto || !datos.fechaPago) {
@@ -295,7 +295,7 @@
       boton.addEventListener("click", () => abrirReciboFirma(recibo.identificadorRecibo));
       const detalle = document.createElement("div");
       detalle.append(
-        crearElementoTexto("strong", recibo.folio),
+        crearElementoTexto("strong", recibo.concepto || "RECIBO SIN CONCEPTO"),
         crearElementoTexto("span", `${recibo.cliente} · ${formatearMoneda(recibo.importe)}`, "texto-secundario texto-pequeno"),
       );
       detalle.lastChild.style.display = "block";
