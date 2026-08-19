@@ -231,8 +231,41 @@ function obtenerContactos_() {
   return Array.isArray(documento.contactos) ? documento.contactos : [];
 }
 
+/**
+ * Normaliza un contacto sin alterar la escritura original del correo.
+ *
+ * @param {Object} datosContacto Nombre, correo y estado recibidos.
+ * @param {string} identificadorContacto Identificador nuevo o existente.
+ * @param {string} fechaActualizacion Fecha compartida por la operación.
+ * @returns {Object} Contacto listo para persistir.
+ */
+function normalizarDatosContacto_(
+  datosContacto,
+  identificadorContacto,
+  fechaActualizacion,
+) {
+  const correoOriginal = String(datosContacto?.correo || "").trim();
+  const correoNormalizado = normalizarCorreoParaComparacion_(correoOriginal);
+  const nombre = normalizarTextoMayusculas_(datosContacto?.nombre);
+
+  if (!nombre) throw new Error("El nombre del contacto es obligatorio.");
+  if (!validarCorreo_(correoOriginal)) throw new Error("El correo no es válido.");
+
+  return {
+    identificadorContacto: identificadorContacto || Utilities.getUuid(),
+    nombre,
+    correoOriginal,
+    correoNormalizado,
+    activo: datosContacto?.activo !== false,
+    fechaActualizacion,
+  };
+}
+
 function guardarContacto(datosContacto) {
   try {
+    if (!sistemaEstaInicializado_()) {
+      throw new Error("El sistema todavía no está inicializado.");
+    }
     const bloqueo = LockService.getScriptLock();
     bloqueo.waitLock(30000);
     try {
@@ -242,33 +275,31 @@ function guardarContacto(datosContacto) {
       const contactos = Array.isArray(documento.contactos)
         ? documento.contactos
         : [];
-      const correoOriginal = String(datosContacto.correo || "").trim();
-      const correoNormalizado = normalizarCorreoParaComparacion_(correoOriginal);
-      const nombre = normalizarTextoMayusculas_(datosContacto.nombre);
-
-      if (!nombre) throw new Error("El nombre del contacto es obligatorio.");
-      if (!validarCorreo_(correoOriginal)) throw new Error("El correo no es válido.");
+      const identificadorSolicitado = String(
+        datosContacto?.identificadorContacto || "",
+      ).trim();
+      const existente = contactos.find(
+        (contacto) =>
+          contacto.identificadorContacto === identificadorSolicitado,
+      );
+      if (identificadorSolicitado && !existente) {
+        throw new Error("El contacto que intentas editar ya no existe.");
+      }
+      const contactoNormalizado = normalizarDatosContacto_(
+        datosContacto,
+        existente?.identificadorContacto,
+        obtenerFechaIso_(new Date()),
+      );
 
       const duplicado = contactos.find(
         (contacto) =>
-          contacto.correoNormalizado === correoNormalizado &&
-          contacto.identificadorContacto !== datosContacto.identificadorContacto,
+          normalizarCorreoParaComparacion_(
+            contacto.correoNormalizado || contacto.correoOriginal,
+          ) === contactoNormalizado.correoNormalizado &&
+          contacto.identificadorContacto !==
+            contactoNormalizado.identificadorContacto,
       );
       if (duplicado) throw new Error("Ya existe un contacto con ese correo.");
-
-      const existente = contactos.find(
-        (contacto) =>
-          contacto.identificadorContacto === datosContacto.identificadorContacto,
-      );
-      const contactoNormalizado = {
-        identificadorContacto:
-          existente?.identificadorContacto || Utilities.getUuid(),
-        nombre,
-        correoOriginal,
-        correoNormalizado,
-        activo: datosContacto.activo !== false,
-        fechaActualizacion: obtenerFechaIso_(new Date()),
-      };
 
       const posicion = contactos.findIndex(
         (contacto) =>
@@ -295,17 +326,24 @@ function guardarContacto(datosContacto) {
 }
 
 /**
- * Elimina un contacto de la libreta de destinatarios. Los correos ya enviados
- * permanecen registrados dentro de cada recibo y en el reporte general.
+ * Guarda varios contactos con una sola lectura y escritura. La operación es
+ * atómica: si una fila es inválida o repetida, no se guarda ningún contacto.
  *
- * @param {string} identificadorContacto Identidad del contacto por eliminar.
- * @returns {Object} Respuesta normalizada para la interfaz.
+ * @param {Object[]} datosContactos Contactos nuevos por registrar.
+ * @returns {Object} Respuesta normalizada con los contactos creados.
  */
-function eliminarContacto(identificadorContacto) {
+function guardarContactosMasivos(datosContactos) {
   try {
-    if (!identificadorContacto) {
-      throw new Error("Selecciona el contacto que deseas eliminar.");
+    if (!sistemaEstaInicializado_()) {
+      throw new Error("El sistema todavía no está inicializado.");
     }
+    if (!Array.isArray(datosContactos) || !datosContactos.length) {
+      throw new Error("Agrega al menos un contacto.");
+    }
+    if (datosContactos.length > 100) {
+      throw new Error("Puedes guardar hasta 100 contactos por lote.");
+    }
+
     const bloqueo = LockService.getScriptLock();
     bloqueo.waitLock(30000);
     try {
@@ -315,23 +353,141 @@ function eliminarContacto(identificadorContacto) {
       const contactos = Array.isArray(documento.contactos)
         ? documento.contactos
         : [];
-      const posicion = contactos.findIndex(
-        (contacto) => contacto.identificadorContacto === identificadorContacto,
+      const correosRegistrados = new Set(
+        contactos.map((contacto) =>
+          normalizarCorreoParaComparacion_(
+            contacto.correoNormalizado || contacto.correoOriginal,
+          ),
+        ),
       );
-      if (posicion < 0) throw new Error("El contacto ya no existe.");
+      const fechaActualizacion = obtenerFechaIso_(new Date());
+      const contactosNuevos = datosContactos.map((datosContacto, indice) => {
+        let contacto;
+        try {
+          contacto = normalizarDatosContacto_(
+            datosContacto,
+            "",
+            fechaActualizacion,
+          );
+        } catch (error) {
+          throw new Error(`Fila ${indice + 1}: ${error.message}`);
+        }
+        if (correosRegistrados.has(contacto.correoNormalizado)) {
+          throw new Error(
+            `Fila ${indice + 1}: ya existe un contacto con ese correo.`,
+          );
+        }
+        correosRegistrados.add(contacto.correoNormalizado);
+        return contacto;
+      });
 
-      const [contactoEliminado] = contactos.splice(posicion, 1);
       documento.version = Number(documento.version || 0) + 1;
-      documento.contactos = contactos;
+      documento.contactos = contactos.concat(contactosNuevos);
       guardarArchivoJsonPorPropiedad_(
         CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
         documento,
       );
       invalidarMemoriaTemporalConfiguracion_();
-      return crearRespuestaExitosa_(contactoEliminado, "Contacto eliminado.");
+      return crearRespuestaExitosa_(
+        {
+          contactos: contactosNuevos,
+          cantidad: contactosNuevos.length,
+        },
+        `${contactosNuevos.length} contacto(s) guardados.`,
+      );
     } finally {
       bloqueo.releaseLock();
     }
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
+/**
+ * Elimina contactos en una sola escritura. Los correos ya enviados permanecen
+ * registrados dentro de cada recibo y en el reporte general.
+ *
+ * @param {string[]} identificadoresContactos Identidades por eliminar.
+ * @returns {Object[]} Contactos eliminados.
+ */
+function eliminarContactosPorIdentificadores_(identificadoresContactos) {
+  if (!sistemaEstaInicializado_()) {
+    throw new Error("El sistema todavía no está inicializado.");
+  }
+  const identificadoresUnicos = Array.from(
+    new Set(
+      (Array.isArray(identificadoresContactos) ? identificadoresContactos : [])
+        .map((identificador) => String(identificador || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  if (!identificadoresUnicos.length) {
+    throw new Error("Selecciona al menos un contacto para eliminar.");
+  }
+
+  const bloqueo = LockService.getScriptLock();
+  bloqueo.waitLock(30000);
+  try {
+    const documento = leerArchivoJsonPorPropiedad_(
+      CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
+    );
+    const contactos = Array.isArray(documento.contactos)
+      ? documento.contactos
+      : [];
+    const identificadoresExistentes = new Set(
+      contactos.map((contacto) => contacto.identificadorContacto),
+    );
+    const identificadorInexistente = identificadoresUnicos.find(
+      (identificador) => !identificadoresExistentes.has(identificador),
+    );
+    if (identificadorInexistente) {
+      throw new Error(
+        "Uno o más contactos seleccionados ya no existen. Actualiza la lista.",
+      );
+    }
+
+    const conjuntoEliminacion = new Set(identificadoresUnicos);
+    const contactosEliminados = contactos.filter((contacto) =>
+      conjuntoEliminacion.has(contacto.identificadorContacto),
+    );
+    documento.version = Number(documento.version || 0) + 1;
+    documento.contactos = contactos.filter(
+      (contacto) => !conjuntoEliminacion.has(contacto.identificadorContacto),
+    );
+    guardarArchivoJsonPorPropiedad_(
+      CLAVES_PROPIEDADES.ARCHIVO_CONTACTOS,
+      documento,
+    );
+    invalidarMemoriaTemporalConfiguracion_();
+    return contactosEliminados;
+  } finally {
+    bloqueo.releaseLock();
+  }
+}
+
+function eliminarContacto(identificadorContacto) {
+  try {
+    const contactosEliminados = eliminarContactosPorIdentificadores_([
+      identificadorContacto,
+    ]);
+    return crearRespuestaExitosa_(contactosEliminados[0], "Contacto eliminado.");
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
+function eliminarContactosMasivos(identificadoresContactos) {
+  try {
+    const contactosEliminados = eliminarContactosPorIdentificadores_(
+      identificadoresContactos,
+    );
+    return crearRespuestaExitosa_(
+      {
+        contactos: contactosEliminados,
+        cantidad: contactosEliminados.length,
+      },
+      `${contactosEliminados.length} contacto(s) eliminados.`,
+    );
   } catch (error) {
     return crearRespuestaError_(error);
   }

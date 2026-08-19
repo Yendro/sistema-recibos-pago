@@ -177,6 +177,18 @@
   .lista-configuracion { gap: 10px; }
   .lista-configuracion .tarjeta { padding: 14px 16px; box-shadow: none; border-color: var(--color-borde-suave); }
   .lista-configuracion .tarjeta:hover { border-color: var(--color-primario); background: #f3fafd; }
+  .elemento-contacto-configuracion { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 11px; }
+  .elemento-contacto-configuracion > input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-primario); }
+  .boton-contacto-configuracion { min-width: 0; padding: 0; color: var(--color-texto); background: transparent; border: 0; text-align: left; cursor: pointer; }
+  .boton-contacto-configuracion:hover strong { color: var(--color-primario); }
+  .boton-contacto-configuracion span { overflow-wrap: anywhere; }
+  .dialogo-contactos-masivos { width: min(880px, calc(100% - 24px)); }
+  .encabezado-contactos-masivos { margin: 16px 0 10px; }
+  .encabezado-contactos-masivos p { margin: 0; }
+  .tabla-contactos-masivos th:nth-child(1) { width: 38%; }
+  .tabla-contactos-masivos th:nth-child(2) { width: auto; }
+  .tabla-contactos-masivos th:last-child { width: 56px; }
+  .fila-contacto-masivo.fila-invalida .entrada-captura { border-color: var(--color-error); background: #fff8f7; }
   .estado-vacio-con-icono { min-height: 100px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: left; }
   .estado-vacio-con-icono p { margin: 0; }
   .datos-cargando .resumen-compacto, .datos-cargando .navegacion-operacion { opacity: .45; }
@@ -257,6 +269,13 @@
     .tabla-captura .fila-captura td:last-child { display: flex; justify-content: flex-end; grid-column: 1 / -1; }
     .tabla-captura .fila-captura td:last-child::before { display: none; }
     .entrada-captura { min-width: 0; }
+    .tabla-contactos-masivos { overflow: visible; border: 0; background: transparent; }
+    .tabla-contactos-masivos thead { display: none; }
+    .tabla-contactos-masivos table, .tabla-contactos-masivos tbody { display: block; }
+    .tabla-contactos-masivos .fila-contacto-masivo { display: grid; grid-template-columns: 1fr 1.4fr auto; align-items: end; gap: 10px; margin-bottom: 10px; padding: 12px; border: 1px solid var(--color-borde-suave); border-radius: var(--radio-grande); background: var(--color-superficie); }
+    .tabla-contactos-masivos .fila-contacto-masivo td { display: grid; gap: 6px; padding: 0; border: 0; }
+    .tabla-contactos-masivos .fila-contacto-masivo td::before { content: attr(data-etiqueta); color: var(--color-texto-secundario); font-size: .78rem; font-weight: 650; }
+    .tabla-contactos-masivos .fila-contacto-masivo td:last-child::before { display: none; }
   }
 
   @media (max-width: 560px) {
@@ -267,6 +286,8 @@
     .tabla-captura .fila-captura { grid-template-columns: 1fr; }
     .tabla-captura .fila-captura td:nth-child(2),
     .tabla-captura .fila-captura td:last-child { grid-column: auto; }
+    .tabla-contactos-masivos .fila-contacto-masivo { grid-template-columns: 1fr; align-items: stretch; }
+    .tabla-contactos-masivos .fila-contacto-masivo td:last-child { justify-items: end; }
     .acciones .boton { flex: 1 1 auto; }
     .inicio-bienvenida { padding: 20px 16px; }
     .inicio-presentacion { grid-template-columns: 1fr; gap: 14px; }

@@ -71,7 +71,23 @@ POR CONCEPTO DE: {{Concepto}}</p>
       </form>
     </article>
     <article class="tarjeta">
-      <h2>Contactos de envío</h2>
+      <div class="encabezado-seccion">
+        <div>
+          <h2>Contactos de envío</h2>
+          <p id="resumenSeleccionContactos" class="texto-secundario texto-pequeno">Ningún contacto seleccionado.</p>
+        </div>
+        <div class="acciones">
+          <button id="botonAbrirContactosMasivos" class="boton boton-tonal" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span> Agregar varios
+          </button>
+          <button id="botonSeleccionarTodosContactos" class="boton boton-texto" type="button">
+            Seleccionar todos
+          </button>
+          <button id="botonEliminarContactosSeleccionados" class="boton boton-error" type="button" disabled>
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span> Eliminar seleccionados
+          </button>
+        </div>
+      </div>
       <div id="listaContactos" class="rejilla lista-configuracion"></div>
     </article>
   </section>
@@ -83,3 +99,48 @@ POR CONCEPTO DE: {{Concepto}}</p>
     </div>
   </section>
 </div>
+
+<dialog id="dialogoContactosMasivos" class="dialogo-material dialogo-contactos-masivos">
+  <div class="encabezado-dialogo">
+    <div>
+      <h2>Agregar varios contactos</h2>
+      <p class="texto-secundario texto-pequeno">Completa las filas o pega dos columnas: Nombre y Correo.</p>
+    </div>
+    <button id="botonCerrarContactosMasivos" class="boton-icono" type="button" aria-label="Cerrar">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </div>
+
+  <details class="opciones-avanzadas">
+    <summary>Pegar desde Excel o Google Sheets</summary>
+    <div class="campo">
+      <label for="datosContactosPegados">Datos tabulados</label>
+      <textarea id="datosContactosPegados" spellcheck="false" placeholder="CONTACTO UNO&#9;contacto@empresa.com"></textarea>
+    </div>
+    <div class="acciones">
+      <button id="botonIncorporarContactosPegados" class="boton boton-tonal" type="button">
+        <span class="material-symbols-outlined" aria-hidden="true">content_paste</span> Incorporar filas
+      </button>
+    </div>
+  </details>
+
+  <div class="encabezado-seccion encabezado-contactos-masivos">
+    <p id="resumenContactosMasivos" class="texto-secundario texto-pequeno" aria-live="polite"></p>
+    <button id="botonAgregarFilaContacto" class="boton boton-texto" type="button">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span> Agregar fila
+    </button>
+  </div>
+  <div class="tabla-contenedor tabla-contactos-masivos">
+    <table>
+      <thead><tr><th>Nombre</th><th>Correo</th><th><span class="solo-lectores-pantalla">Acciones</span></th></tr></thead>
+      <tbody id="filasContactosMasivos"></tbody>
+    </table>
+  </div>
+  <div id="estadoContactosMasivos" class="estado-proceso-dialogo oculto" role="status" aria-live="polite"></div>
+  <div class="acciones acciones-dialogo">
+    <button id="botonCancelarContactosMasivos" class="boton boton-texto" type="button">Cancelar</button>
+    <button id="botonGuardarContactosMasivos" class="boton boton-primario" type="button">
+      <span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Guardar contactos
+    </button>
+  </div>
+</dialog>

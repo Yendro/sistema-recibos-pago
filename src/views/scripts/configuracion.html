@@ -1,6 +1,7 @@
 <script>
   let tiposReciboConfigurados = [];
   let contactosConfigurados = [];
+  const identificadoresContactosSeleccionados = new Set();
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("formularioTipoRecibo").addEventListener("submit", guardarTipoDesdeFormulario);
@@ -9,6 +10,17 @@
     document.getElementById("botonEliminarTipo").addEventListener("click", eliminarTipoSeleccionado);
     document.getElementById("botonNuevoContacto").addEventListener("click", limpiarFormularioContacto);
     document.getElementById("botonEliminarContacto").addEventListener("click", eliminarContactoSeleccionado);
+    document.getElementById("botonAbrirContactosMasivos").addEventListener("click", abrirDialogoContactosMasivos);
+    document.getElementById("botonCerrarContactosMasivos").addEventListener("click", cerrarDialogoContactosMasivos);
+    document.getElementById("botonCancelarContactosMasivos").addEventListener("click", cerrarDialogoContactosMasivos);
+    document.getElementById("botonAgregarFilaContacto").addEventListener("click", () => agregarFilaContactoMasivo());
+    document.getElementById("botonIncorporarContactosPegados").addEventListener("click", incorporarContactosPegados);
+    document.getElementById("botonGuardarContactosMasivos").addEventListener("click", guardarContactosMasivosDesdeDialogo);
+    document.getElementById("botonSeleccionarTodosContactos").addEventListener("click", alternarSeleccionTodosContactos);
+    document.getElementById("botonEliminarContactosSeleccionados").addEventListener("click", eliminarContactosSeleccionados);
+    document.getElementById("dialogoContactosMasivos").addEventListener("cancel", (evento) => {
+      if (evento.currentTarget.getAttribute("aria-busy") === "true") evento.preventDefault();
+    });
     document.getElementById("botonInicializar").addEventListener("click", inicializarEntorno);
     document.getElementById("botonAbrirReporte").addEventListener("click", abrirReporte);
     cargarConfiguracion();
@@ -23,6 +35,7 @@
       if (!datos.inicializado) return;
       tiposReciboConfigurados = datos.tiposRecibo;
       contactosConfigurados = datos.contactos;
+      identificadoresContactosSeleccionados.clear();
       renderizarTiposRecibo();
       renderizarContactos();
       if (!document.getElementById("identificadorTipoRecibo").value && tiposReciboConfigurados.length) {
@@ -144,21 +157,286 @@
     contenedor.replaceChildren();
     if (!contactosConfigurados.length) {
       contenedor.append(crearElementoTexto("p", "No hay contactos configurados.", "texto-secundario"));
+      actualizarSeleccionContactos();
       return;
     }
     contactosConfigurados.forEach((contacto) => {
-      const tarjeta = document.createElement("button");
-      tarjeta.type = "button";
-      tarjeta.className = "tarjeta boton-texto";
-      tarjeta.style.textAlign = "left";
-      tarjeta.addEventListener("click", () => editarContacto(contacto.identificadorContacto));
-      tarjeta.append(
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjeta elemento-contacto-configuracion";
+      const casilla = document.createElement("input");
+      casilla.type = "checkbox";
+      casilla.value = contacto.identificadorContacto;
+      casilla.checked = identificadoresContactosSeleccionados.has(
+        contacto.identificadorContacto,
+      );
+      casilla.setAttribute("aria-label", `Seleccionar ${contacto.nombre}`);
+      casilla.addEventListener("change", () => {
+        if (casilla.checked) {
+          identificadoresContactosSeleccionados.add(contacto.identificadorContacto);
+        } else {
+          identificadoresContactosSeleccionados.delete(contacto.identificadorContacto);
+        }
+        actualizarSeleccionContactos();
+      });
+      const contenido = document.createElement("button");
+      contenido.type = "button";
+      contenido.className = "boton-contacto-configuracion";
+      contenido.addEventListener("click", () => editarContacto(contacto.identificadorContacto));
+      contenido.append(
         crearElementoTexto("strong", contacto.nombre),
         crearElementoTexto("span", contacto.correoOriginal, "texto-secundario texto-pequeno"),
       );
-      tarjeta.lastChild.style.display = "block";
+      contenido.lastChild.style.display = "block";
+      tarjeta.append(casilla, contenido);
       contenedor.append(tarjeta);
     });
+    actualizarSeleccionContactos();
+  }
+
+  function actualizarSeleccionContactos() {
+    const cantidad = identificadoresContactosSeleccionados.size;
+    document.getElementById("resumenSeleccionContactos").textContent = cantidad
+      ? `${cantidad} contacto(s) seleccionado(s).`
+      : "Ningún contacto seleccionado.";
+    document.getElementById("botonEliminarContactosSeleccionados").disabled = !cantidad;
+    document.getElementById("botonSeleccionarTodosContactos").disabled = !contactosConfigurados.length;
+    document.getElementById("botonSeleccionarTodosContactos").textContent =
+      contactosConfigurados.length && cantidad === contactosConfigurados.length
+        ? "Limpiar selección"
+        : "Seleccionar todos";
+  }
+
+  function alternarSeleccionTodosContactos() {
+    const seleccionar =
+      identificadoresContactosSeleccionados.size !== contactosConfigurados.length;
+    identificadoresContactosSeleccionados.clear();
+    if (seleccionar) {
+      contactosConfigurados.forEach((contacto) =>
+        identificadoresContactosSeleccionados.add(
+          contacto.identificadorContacto,
+        ),
+      );
+    }
+    renderizarContactos();
+  }
+
+  async function eliminarContactosSeleccionados() {
+    const identificadores = Array.from(identificadoresContactosSeleccionados);
+    if (!identificadores.length) return;
+    if (!window.confirm(
+      `¿Eliminar definitivamente ${identificadores.length} contacto(s) seleccionado(s)?`,
+    )) return;
+
+    const boton = document.getElementById("botonEliminarContactosSeleccionados");
+    establecerBotonProcesando(boton, true);
+    mostrarCarga(true, "Eliminando contactos…");
+    try {
+      const respuesta = await ejecutarServidor(
+        "eliminarContactosMasivos",
+        identificadores,
+      );
+      exigirRespuestaExitosa(respuesta);
+      limpiarFormularioContacto();
+      mostrarMensaje(respuesta.mensaje);
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      establecerBotonProcesando(boton, false);
+      mostrarCarga(false);
+      actualizarSeleccionContactos();
+    }
+  }
+
+  function abrirDialogoContactosMasivos() {
+    const dialogo = document.getElementById("dialogoContactosMasivos");
+    document.getElementById("filasContactosMasivos").replaceChildren();
+    document.getElementById("datosContactosPegados").value = "";
+    agregarFilaContactoMasivo();
+    actualizarResumenContactosMasivos();
+    dialogo.showModal();
+  }
+
+  function cerrarDialogoContactosMasivos() {
+    const dialogo = document.getElementById("dialogoContactosMasivos");
+    if (dialogo.getAttribute("aria-busy") !== "true") dialogo.close();
+  }
+
+  function crearEntradaContactoMasivo(tipo, nombre, valor, marcador) {
+    const entrada = document.createElement("input");
+    entrada.type = tipo;
+    entrada.name = nombre;
+    entrada.value = valor || "";
+    entrada.placeholder = marcador;
+    entrada.required = true;
+    entrada.className = "entrada-captura";
+    entrada.addEventListener("input", actualizarResumenContactosMasivos);
+    return entrada;
+  }
+
+  function agregarFilaContactoMasivo(datos = {}) {
+    const cuerpo = document.getElementById("filasContactosMasivos");
+    const fila = document.createElement("tr");
+    fila.className = "fila-contacto-masivo";
+    const campos = [
+      crearEntradaContactoMasivo("text", "nombreContactoMasivo", datos.nombre, "Nombre del contacto"),
+      crearEntradaContactoMasivo("email", "correoContactoMasivo", datos.correo, "correo@empresa.com"),
+    ];
+    ["Nombre", "Correo"].forEach((etiqueta, indice) => {
+      const celda = document.createElement("td");
+      celda.dataset.etiqueta = etiqueta;
+      celda.append(campos[indice]);
+      fila.append(celda);
+    });
+    const celdaAccion = document.createElement("td");
+    celdaAccion.dataset.etiqueta = "Acciones";
+    const botonEliminar = crearBotonIcono("delete", "Eliminar fila");
+    botonEliminar.addEventListener("click", () => {
+      fila.remove();
+      if (!cuerpo.children.length) agregarFilaContactoMasivo();
+      actualizarResumenContactosMasivos();
+    });
+    celdaAccion.append(botonEliminar);
+    fila.append(celdaAccion);
+    cuerpo.append(fila);
+    actualizarResumenContactosMasivos();
+  }
+
+  function obtenerFilasContactosMasivos() {
+    return Array.from(document.querySelectorAll(".fila-contacto-masivo")).map(
+      (fila) => ({
+        elemento: fila,
+        entradaCorreo: fila.querySelector('[name="correoContactoMasivo"]'),
+        nombre: fila.querySelector('[name="nombreContactoMasivo"]').value.trim(),
+        correo: fila.querySelector('[name="correoContactoMasivo"]').value.trim(),
+      }),
+    );
+  }
+
+  function validarFilaContactoMasivo(fila) {
+    const vacia = !fila.nombre && !fila.correo;
+    return {
+      vacia,
+      valida: !vacia && Boolean(
+        fila.nombre && fila.correo && fila.entradaCorreo.checkValidity(),
+      ),
+    };
+  }
+
+  function actualizarResumenContactosMasivos() {
+    let validas = 0;
+    let incompletas = 0;
+    const correos = new Set();
+    let duplicadas = 0;
+    obtenerFilasContactosMasivos().forEach((fila) => {
+      const validacion = validarFilaContactoMasivo(fila);
+      const correoNormalizado = fila.correo.toLocaleLowerCase();
+      const repetida = Boolean(correoNormalizado && correos.has(correoNormalizado));
+      if (correoNormalizado) correos.add(correoNormalizado);
+      fila.elemento.classList.toggle(
+        "fila-invalida",
+        (!validacion.valida && !validacion.vacia) || repetida,
+      );
+      if (repetida) duplicadas += 1;
+      else if (validacion.valida) validas += 1;
+      else if (!validacion.vacia) incompletas += 1;
+    });
+    document.getElementById("resumenContactosMasivos").textContent =
+      `${validas} contacto(s) listos` +
+      `${incompletas ? ` · ${incompletas} fila(s) incompletas` : ""}` +
+      `${duplicadas ? ` · ${duplicadas} correo(s) repetidos` : ""}.`;
+  }
+
+  function incorporarContactosPegados() {
+    try {
+      let filas = document.getElementById("datosContactosPegados").value
+        .split(/\r?\n/)
+        .filter((linea) => linea.trim())
+        .map((linea, indice) => {
+          const columnas = linea.split("\t");
+          if (columnas.length !== 2) {
+            throw new Error(`Fila ${indice + 1}: se esperaban dos columnas.`);
+          }
+          return { nombre: columnas[0].trim(), correo: columnas[1].trim() };
+        });
+      if (
+        filas.length &&
+        filas[0].nombre.toLocaleUpperCase() === "NOMBRE" &&
+        ["CORREO", "EMAIL", "E-MAIL"].includes(
+          filas[0].correo.toLocaleUpperCase(),
+        )
+      ) {
+        filas = filas.slice(1);
+      }
+      if (!filas.length) throw new Error("Pega al menos un contacto.");
+      if (filas.some((fila) => !fila.nombre || !fila.correo)) {
+        throw new Error("Los nombres y correos pegados son obligatorios.");
+      }
+
+      const filasActuales = obtenerFilasContactosMasivos();
+      if (
+        filasActuales.length === 1 &&
+        validarFilaContactoMasivo(filasActuales[0]).vacia
+      ) {
+        document.getElementById("filasContactosMasivos").replaceChildren();
+      }
+      filas.forEach(agregarFilaContactoMasivo);
+      document.getElementById("datosContactosPegados").value = "";
+      mostrarMensaje(`${filas.length} fila(s) incorporadas y listas para revisar.`);
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    }
+  }
+
+  function establecerDialogoContactosProcesando(procesando) {
+    const dialogo = document.getElementById("dialogoContactosMasivos");
+    const estado = document.getElementById("estadoContactosMasivos");
+    dialogo.setAttribute("aria-busy", procesando ? "true" : "false");
+    dialogo.querySelectorAll("button, input, textarea").forEach((control) => {
+      control.disabled = procesando;
+    });
+    estado.replaceChildren();
+    estado.classList.toggle("oculto", !procesando);
+    if (procesando) {
+      estado.append(
+        crearIconoMaterial("refresh"),
+        document.createTextNode("Guardando contactos…"),
+      );
+    }
+  }
+
+  async function guardarContactosMasivosDesdeDialogo() {
+    const filas = obtenerFilasContactosMasivos().filter(
+      (fila) => !validarFilaContactoMasivo(fila).vacia,
+    );
+    if (!filas.length) return mostrarMensaje("Agrega al menos un contacto.", true);
+    if (filas.some((fila) => !validarFilaContactoMasivo(fila).valida)) {
+      return mostrarMensaje("Corrige las filas marcadas antes de continuar.", true);
+    }
+    const correos = filas.map((fila) => fila.correo.toLocaleLowerCase());
+    if (new Set(correos).size !== correos.length) {
+      return mostrarMensaje("No repitas correos dentro del mismo lote.", true);
+    }
+
+    establecerDialogoContactosProcesando(true);
+    try {
+      const respuesta = await ejecutarServidor(
+        "guardarContactosMasivos",
+        filas.map((fila) => ({
+          nombre: fila.nombre,
+          correo: fila.correo,
+          activo: true,
+        })),
+      );
+      exigirRespuestaExitosa(respuesta);
+      document.getElementById("dialogoContactosMasivos").close();
+      mostrarMensaje(respuesta.mensaje);
+      await cargarConfiguracion();
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+    } finally {
+      establecerDialogoContactosProcesando(false);
+    }
   }
 
   function editarContacto(identificador) {
