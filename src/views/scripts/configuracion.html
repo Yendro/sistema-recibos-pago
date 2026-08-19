@@ -252,6 +252,7 @@
     const dialogo = document.getElementById("dialogoContactosMasivos");
     document.getElementById("filasContactosMasivos").replaceChildren();
     document.getElementById("datosContactosPegados").value = "";
+    ocultarEstadoContactosMasivos();
     agregarFilaContactoMasivo();
     actualizarResumenContactosMasivos();
     dialogo.showModal();
@@ -382,25 +383,52 @@
       }
       filas.forEach(agregarFilaContactoMasivo);
       document.getElementById("datosContactosPegados").value = "";
-      mostrarMensaje(`${filas.length} fila(s) incorporadas y listas para revisar.`);
+      mostrarEstadoContactosMasivos(
+        `${filas.length} fila(s) incorporadas y listas para revisar.`,
+      );
     } catch (error) {
-      mostrarMensaje(error.message, true);
+      mostrarEstadoContactosMasivos(error.message, true);
     }
+  }
+
+  function mostrarEstadoContactosMasivos(
+    mensaje,
+    esError = false,
+    procesando = false,
+  ) {
+    const estado = document.getElementById("estadoContactosMasivos");
+    estado.className =
+      "estado-proceso-dialogo" +
+      (esError
+        ? " estado-error-local"
+        : procesando
+          ? ""
+          : " estado-informativo-local");
+    estado.setAttribute("role", esError ? "alert" : "status");
+    estado.replaceChildren(
+      crearIconoMaterial(procesando ? "refresh" : esError ? "info" : "check_circle"),
+      document.createTextNode(mensaje),
+    );
+  }
+
+  function ocultarEstadoContactosMasivos() {
+    const estado = document.getElementById("estadoContactosMasivos");
+    estado.classList.add("oculto");
+    estado.replaceChildren();
+    estado.setAttribute("role", "status");
   }
 
   function establecerDialogoContactosProcesando(procesando) {
     const dialogo = document.getElementById("dialogoContactosMasivos");
-    const estado = document.getElementById("estadoContactosMasivos");
     dialogo.setAttribute("aria-busy", procesando ? "true" : "false");
     dialogo.querySelectorAll("button, input, textarea").forEach((control) => {
       control.disabled = procesando;
     });
-    estado.replaceChildren();
-    estado.classList.toggle("oculto", !procesando);
     if (procesando) {
-      estado.append(
-        crearIconoMaterial("refresh"),
-        document.createTextNode("Guardando contactos…"),
+      mostrarEstadoContactosMasivos(
+        "Guardando contactos…",
+        false,
+        true,
       );
     }
   }
@@ -409,16 +437,30 @@
     const filas = obtenerFilasContactosMasivos().filter(
       (fila) => !validarFilaContactoMasivo(fila).vacia,
     );
-    if (!filas.length) return mostrarMensaje("Agrega al menos un contacto.", true);
+    ocultarEstadoContactosMasivos();
+    if (!filas.length) {
+      return mostrarEstadoContactosMasivos(
+        "Agrega al menos un contacto.",
+        true,
+      );
+    }
     if (filas.some((fila) => !validarFilaContactoMasivo(fila).valida)) {
-      return mostrarMensaje("Corrige las filas marcadas antes de continuar.", true);
+      return mostrarEstadoContactosMasivos(
+        "Corrige las filas marcadas antes de continuar.",
+        true,
+      );
     }
     const correos = filas.map((fila) => fila.correo.toLocaleLowerCase());
     if (new Set(correos).size !== correos.length) {
-      return mostrarMensaje("No repitas correos dentro del mismo lote.", true);
+      return mostrarEstadoContactosMasivos(
+        "No repitas correos dentro del mismo lote.",
+        true,
+      );
     }
+    if (!window.confirm(`¿Guardar ${filas.length} contacto(s)?`)) return;
 
     establecerDialogoContactosProcesando(true);
+    let errorOperacion = null;
     try {
       const respuesta = await ejecutarServidor(
         "guardarContactosMasivos",
@@ -428,14 +470,22 @@
           activo: true,
         })),
       );
-      exigirRespuestaExitosa(respuesta);
+      const datos = exigirRespuestaExitosa(respuesta);
+      contactosConfigurados = contactosConfigurados.concat(
+        datos.contactos || [],
+      );
+      identificadoresContactosSeleccionados.clear();
+      renderizarContactos();
       document.getElementById("dialogoContactosMasivos").close();
       mostrarMensaje(respuesta.mensaje);
       await cargarConfiguracion();
     } catch (error) {
-      mostrarMensaje(error.message, true);
+      errorOperacion = error;
     } finally {
       establecerDialogoContactosProcesando(false);
+    }
+    if (errorOperacion) {
+      mostrarEstadoContactosMasivos(errorOperacion.message, true);
     }
   }
 
