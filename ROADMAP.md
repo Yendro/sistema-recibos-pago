@@ -13,8 +13,11 @@
 - [x] Inicialización automática de directorios, propiedades y archivos.
 - [x] Ubicación de dependencias dentro de la carpeta del proyecto Apps Script.
 - [x] Configuración de tipos de recibo y contactos.
+- [x] Alta y eliminación masiva de contactos con validación atómica.
 - [x] Captura manual y pegado masivo mediante cuadrícula editable.
+- [x] Orden de captura Cliente, Concepto, Importe y Fecha.
 - [x] Bandeja de recibos pendientes.
+- [x] Identificación de pendientes por concepto en lugar del folio técnico.
 - [x] Firma integrada y captura comprimida de evidencia.
 - [x] Generación directa de PDF en carta y A4.
 - [x] Envío a contactos configurados.

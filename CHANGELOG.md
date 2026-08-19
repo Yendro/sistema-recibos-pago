@@ -27,6 +27,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Eliminación segura de contactos y tipos de recibo sin referencias históricas.
 - Estado de progreso y error dentro del diálogo de envío por correo.
 - Eliminación protegida de recibos no enviados desde el historial.
+- Creación masiva de contactos mediante filas editables o pegado desde hojas de
+  cálculo.
+- Selección y eliminación múltiple de contactos en una sola operación.
 
 ### Modificado
 
@@ -55,6 +58,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   bajo bloqueo; PDF, firma y fotografía se envían a la papelera.
 - Las evidencias quedan vinculadas antes de convertir el PDF para poder limpiarlas
   aunque la conversión termine en error.
+- La captura y el pegado de recibos utilizan el orden Cliente, Concepto, Importe
+  y Fecha.
+- La bandeja de pendientes muestra el concepto como título operativo del recibo.
 
 ### Eliminado
 

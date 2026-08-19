@@ -129,6 +129,8 @@ Realiza la prueba con datos claramente identificados como control:
 - Abrir Inicio, Operación y Configuración desde Google Sites.
 - Confirmar que `/exec` sin parámetros muestre la guía de usuario.
 - Confirmar tipos, contactos, logotipos y carpeta raíz.
+- Crear dos contactos temporales en un lote y eliminarlos mediante selección
+  múltiple.
 - Crear un recibo de importe pequeño.
 - Firmar y capturar fotografía desde la tableta.
 - Abrir el PDF y comprobar las tres imágenes.

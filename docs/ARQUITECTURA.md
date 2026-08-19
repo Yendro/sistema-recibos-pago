@@ -104,6 +104,20 @@ participa en búsquedas, configuración ni decisiones operativas.
 La sincronización normal es inmediata y de mejor esfuerzo. Una cola automática
 para reconciliar fallos pendientes pertenece a la fase 2.
 
+## Construcción del folio
+
+El folio utiliza el formato:
+
+```text
+PREFIJO-AAAAMMDDHHMMSS-SECUENCIA
+```
+
+La secuencia final no es un consecutivo global. Empieza en `01` cada vez que
+cambia el segundo de creación y solo avanza a `02`, `03` o valores posteriores
+cuando varios recibos del mismo prefijo se crean dentro del mismo segundo. La
+marca de tiempo aporta la unicidad principal; el sufijo evita colisiones dentro
+de un lote generado en ese instante.
+
 ## Seguridad
 
 - La implementación se ejecuta como la cuenta propietaria.

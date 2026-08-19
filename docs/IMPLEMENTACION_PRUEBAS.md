@@ -115,7 +115,7 @@ realiza exclusivamente desde el sidebar de Google Sites.
    incorporar cuatro columnas:
 
    ```text
-   Cliente | Importe | Concepto | Fecha de pago
+   Cliente | Concepto | Importe | Fecha de pago
    ```
 
 7. Revisa la tabla y crea el lote.
@@ -126,14 +126,20 @@ realiza exclusivamente desde el sidebar de Google Sites.
 12. Comprueba el correo y la fila del reporte general.
 13. Repite la firma con un tipo A4 que tenga logotipo y comprueba que el PDF
     muestre logotipo, firma y fotografía.
-14. Crea un contacto temporal, edítalo y elimínalo desde **Configuración**.
-15. Crea un tipo temporal sin recibos y elimínalo. Comprueba también que un tipo
+14. Crea un contacto temporal de forma individual y edítalo.
+15. Selecciona **Agregar varios**, captura filas manualmente y pega al menos dos
+    columnas de nombres y correos desde una hoja de cálculo.
+16. Comprueba que un correo repetido rechace el lote completo sin guardar filas
+    parciales.
+17. Selecciona varios contactos mediante sus casillas, confirma la eliminación y
+    verifica que desaparezcan en una sola actualización.
+18. Crea un tipo temporal sin recibos y elimínalo. Comprueba también que un tipo
     ya utilizado no se pueda borrar y sí se pueda desactivar.
-16. Crea un recibo pendiente, elimínalo desde **Historial** y confirma que ya no
+19. Crea un recibo pendiente, elimínalo desde **Historial** y confirma que ya no
     aparezca en pendientes, en el índice ni en el reporte general.
-17. Firma otro recibo sin enviarlo, elimínalo y comprueba que la fila desaparezca
+20. Firma otro recibo sin enviarlo, elimínalo y comprueba que la fila desaparezca
     del reporte y que PDF, firma y fotografía estén en la papelera de Drive.
-18. Envía un recibo y confirma que su fila de historial no muestre la acción
+21. Envía un recibo y confirma que su fila de historial no muestre la acción
     **Eliminar**.
 
 ## 7. Integración con Google Sites
