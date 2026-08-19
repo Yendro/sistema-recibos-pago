@@ -41,7 +41,9 @@ const funcionesPublicasPermitidas = new Set([
   "guardarTipoRecibo",
   "eliminarTipoRecibo",
   "guardarContacto",
+  "guardarContactosMasivos",
   "eliminarContacto",
+  "eliminarContactosMasivos",
   "crearRecibosMasivo",
   "listarRecibos",
   "eliminarReciboNoEnviado",
@@ -235,6 +237,62 @@ const interfazOperacion = sistemaArchivos.readFileSync(
 );
 if (!interfazOperacion.includes('recibo.estado !== "ENVIADO"')) {
   errores.push("src/views/scripts/operacion.html: un recibo enviado no debe mostrar la acción de eliminar.");
+}
+
+const paginaOperacion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "pages", "operacion.html"),
+  "utf8",
+);
+const posicionesCaptura = [
+  "<th>Cliente</th>",
+  "<th>Concepto</th>",
+  "<th>Importe</th>",
+  "<th>Fecha de pago</th>",
+].map((encabezado) => paginaOperacion.indexOf(encabezado));
+if (
+  posicionesCaptura.some((posicion) => posicion < 0) ||
+  posicionesCaptura.some(
+    (posicion, indice) => indice > 0 && posicion <= posicionesCaptura[indice - 1],
+  ) ||
+  !paginaOperacion.includes("Columnas: Cliente, Concepto, Importe y Fecha.")
+) {
+  errores.push("src/views/pages/operacion.html: la captura debe conservar el orden Cliente, Concepto, Importe y Fecha.");
+}
+if (
+  !interfazOperacion.includes("concepto: columnas[1].trim()") ||
+  !interfazOperacion.includes("importe: interpretarImportePegado(columnas[2])") ||
+  !interfazOperacion.includes('crearElementoTexto("strong", recibo.concepto')
+) {
+  errores.push("src/views/scripts/operacion.html: el pegado y los pendientes deben priorizar el concepto.");
+}
+
+const repositorioConfiguracion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "repositories", "configuracion_drive.js"),
+  "utf8",
+);
+const paginaConfiguracion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "pages", "configuracion.html"),
+  "utf8",
+);
+const interfazConfiguracion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "src", "views", "scripts", "configuracion.html"),
+  "utf8",
+);
+if (
+  !repositorioConfiguracion.includes("function guardarContactosMasivos(") ||
+  !repositorioConfiguracion.includes("contactos.concat(contactosNuevos)") ||
+  !repositorioConfiguracion.includes("function eliminarContactosMasivos(") ||
+  !repositorioConfiguracion.includes("conjuntoEliminacion.has(contacto.identificadorContacto)")
+) {
+  errores.push("src/repositories/configuracion_drive.js: los contactos masivos deben guardarse y eliminarse en operaciones únicas.");
+}
+if (
+  !paginaConfiguracion.includes('id="dialogoContactosMasivos"') ||
+  !paginaConfiguracion.includes('id="botonEliminarContactosSeleccionados"') ||
+  !interfazConfiguracion.includes('ejecutarServidor(\n        "guardarContactosMasivos"') ||
+  !interfazConfiguracion.includes('"eliminarContactosMasivos"')
+) {
+  errores.push("src/views/configuracion: la interfaz debe conservar la creación y eliminación masiva de contactos.");
 }
 
 if (errores.length) {
