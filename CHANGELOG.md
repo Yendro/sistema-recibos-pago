@@ -61,6 +61,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La captura y el pegado de recibos utilizan el orden Cliente, Concepto, Importe
   y Fecha.
 - La bandeja de pendientes muestra el concepto como título operativo del recibo.
+- La creación masiva de contactos solicita confirmación, muestra errores dentro
+  del diálogo y actualiza la lista inmediatamente después de guardar.
 
 ### Eliminado
 
