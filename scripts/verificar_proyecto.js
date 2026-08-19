@@ -290,9 +290,13 @@ if (
   !paginaConfiguracion.includes('id="dialogoContactosMasivos"') ||
   !paginaConfiguracion.includes('id="botonEliminarContactosSeleccionados"') ||
   !interfazConfiguracion.includes('ejecutarServidor(\n        "guardarContactosMasivos"') ||
-  !interfazConfiguracion.includes('"eliminarContactosMasivos"')
+  !interfazConfiguracion.includes('"eliminarContactosMasivos"') ||
+  !interfazConfiguracion.includes("window.confirm(`¿Guardar ${filas.length} contacto(s)?`)") ||
+  !interfazConfiguracion.includes("mostrarEstadoContactosMasivos(errorOperacion.message, true)") ||
+  !interfazConfiguracion.includes("contactosConfigurados = contactosConfigurados.concat(") ||
+  !interfazConfiguracion.includes("await cargarConfiguracion()")
 ) {
-  errores.push("src/views/configuracion: la interfaz debe conservar la creación y eliminación masiva de contactos.");
+  errores.push("src/views/configuracion: los contactos masivos deben confirmar, informar, actualizar y reconciliar la lista.");
 }
 
 if (errores.length) {
