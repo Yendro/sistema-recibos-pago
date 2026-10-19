@@ -112,6 +112,14 @@ Después de integrar el workflow en `main`:
 7. Ejecuta la prueba de humo descrita en
    [Despliegue a producción](DESPLIEGUE_PRODUCCION.md).
 
+### Validación realizada
+
+La primera ejecución manual se completó correctamente el 19 de octubre de
+2026 sobre el commit `0898b3e` de `main`. El workflow verificó el proyecto,
+sincronizó el código y actualizó el deployment productivo a la versión 14 sin
+cambiar su URL. La activación automática permanece pendiente hasta terminar la
+prueba de humo productiva.
+
 ## Seguridad y recuperación
 
 - El job solo tiene permiso de lectura sobre el repositorio.

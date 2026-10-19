@@ -16,8 +16,9 @@ de integración de Git.
   tiene un único responsable.
 - `[Sin publicar]` permanece en el changelog hasta que el despliegue productivo
   y su prueba de humo concluyan correctamente.
-- GitHub Actions contiene un workflow manual que debe validarse antes de
-  habilitar publicaciones automáticas desde `main`.
+- GitHub Actions ya actualizó correctamente el deployment productivo mediante
+  una ejecución manual. Falta la prueba de humo antes de habilitar
+  publicaciones automáticas desde `main`.
 - La fase de robustecimiento de datos se atenderá después de estabilizar la
   automatización de despliegues.
 

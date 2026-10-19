@@ -18,8 +18,9 @@ Pagos. La instalación principal comienza en el [README de la raíz](../README.m
 
 - La instalación, inicialización y operación descritas corresponden a la
   arquitectura sin Google Docs ni una hoja de configuración operativa.
-- GitHub Actions contiene la primera etapa del despliegue: ejecución manual,
-  validada antes de habilitar publicaciones automáticas desde `main`.
+- GitHub Actions ya completó satisfactoriamente su primera ejecución manual. La
+  publicación automática desde `main` se habilitará después de la prueba de
+  humo productiva.
 - La fase de robustecimiento permanece documentada, pero no forma parte del
   cierre de la rama de reestructuración.
 
@@ -37,7 +38,7 @@ pendientes.
 ## Orden para la liberación 2.0.0
 
 1. Integrar y verificar la rama de reestructuración en `main`.
-2. Preparar y validar el despliegue continuo en una rama independiente.
+2. Preparar y validar el despliegue continuo en una rama independiente. Hecho.
 3. Ejecutar la [guía de despliegue](DESPLIEGUE_PRODUCCION.md).
 4. Completar la prueba de humo productiva.
 5. Cerrar `[Sin publicar]` como `2.0.0` con la fecha real del despliegue.
