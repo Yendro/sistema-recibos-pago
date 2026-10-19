@@ -289,7 +289,7 @@ if (
 if (
   !paginaConfiguracion.includes('id="dialogoContactosMasivos"') ||
   !paginaConfiguracion.includes('id="botonEliminarContactosSeleccionados"') ||
-  !interfazConfiguracion.includes('ejecutarServidor(\n        "guardarContactosMasivos"') ||
+  !/ejecutarServidor\(\s*"guardarContactosMasivos"/.test(interfazConfiguracion) ||
   !interfazConfiguracion.includes('"eliminarContactosMasivos"') ||
   !interfazConfiguracion.includes("window.confirm(`¿Guardar ${filas.length} contacto(s)?`)") ||
   !interfazConfiguracion.includes("mostrarEstadoContactosMasivos(errorOperacion.message, true)") ||
