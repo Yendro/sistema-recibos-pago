@@ -65,7 +65,7 @@ Robustecimiento que ya contiene el proyecto:
 - [x] Validar el workflow mediante una ejecución manual.
 - [ ] Habilitar el despliegue automático para cambios desplegables en `main`.
 - [x] Crear o actualizar el despliegue productivo.
-- [ ] Ejecutar la prueba de humo en producción.
+- [x] Ejecutar la prueba de humo en producción.
 - [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.
 - [ ] Crear la etiqueta `v2.0.0`.
 - [ ] Conservar el sistema anterior disponible para reversión durante el corte.

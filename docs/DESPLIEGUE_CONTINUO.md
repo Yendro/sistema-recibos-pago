@@ -117,8 +117,9 @@ Después de integrar el workflow en `main`:
 La primera ejecución manual se completó correctamente el 19 de octubre de
 2026 sobre el commit `0898b3e` de `main`. El workflow verificó el proyecto,
 sincronizó el código y actualizó el deployment productivo a la versión 14 sin
-cambiar su URL. La activación automática permanece pendiente hasta terminar la
-prueba de humo productiva.
+cambiar su URL. Posteriormente se validaron correctamente el flujo operativo,
+el PDF y el envío en la Web App productiva, por lo que el despliegue automático
+ya puede habilitarse.
 
 ## Seguridad y recuperación
 

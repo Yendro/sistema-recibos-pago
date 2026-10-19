@@ -14,11 +14,11 @@ de integración de Git.
 
 - La reestructuración se integra localmente mediante Git porque el repositorio
   tiene un único responsable.
-- `[Sin publicar]` permanece en el changelog hasta que el despliegue productivo
-  y su prueba de humo concluyan correctamente.
+- `[Sin publicar]` permanece en el changelog hasta cerrar formalmente la versión
+  y crear su etiqueta.
 - GitHub Actions ya actualizó correctamente el deployment productivo mediante
-  una ejecución manual. Falta la prueba de humo antes de habilitar
-  publicaciones automáticas desde `main`.
+  una ejecución manual y la prueba de humo productiva concluyó sin errores. El
+  siguiente paso es habilitar publicaciones automáticas desde `main`.
 - La fase de robustecimiento de datos se atenderá después de estabilizar la
   automatización de despliegues.
 

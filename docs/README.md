@@ -40,6 +40,6 @@ pendientes.
 1. Integrar y verificar la rama de reestructuración en `main`.
 2. Preparar y validar el despliegue continuo en una rama independiente. Hecho.
 3. Ejecutar la [guía de despliegue](DESPLIEGUE_PRODUCCION.md).
-4. Completar la prueba de humo productiva.
+4. Completar la prueba de humo productiva. Hecho.
 5. Cerrar `[Sin publicar]` como `2.0.0` con la fecha real del despliegue.
 6. Atender respaldos y reconciliación del reporte durante el robustecimiento.
