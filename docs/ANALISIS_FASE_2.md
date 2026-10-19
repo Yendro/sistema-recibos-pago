@@ -6,6 +6,10 @@ La fase 2 aumenta la capacidad de diagnóstico y recuperación. No es necesaria
 para crear, firmar, enviar o consultar recibos: ese flujo ya está implementado y
 validado en la Web App.
 
+Su desarrollo queda aplazado hasta integrar la reestructuración en `main` y
+validar el despliegue continuo con GitHub Actions. Esta decisión evita mezclar
+cambios de persistencia con la preparación de la entrega automática.
+
 Para el volumen actual —aproximadamente diez recibos diarios y pocos operadores—
 ningún punto restante debe bloquear el lanzamiento. Las prioridades cambian si
 crece el volumen, se agregan cuentas o existe una obligación formal de auditoría.
@@ -146,12 +150,13 @@ la primera semana productiva ofrece datos más útiles que una prueba artificial
 
 ## Decisión de liberación
 
-La fase 2 puede continuar después de `2.0.0`. Para el lanzamiento solo se requiere:
+La fase 2 puede continuar después de `2.0.0`. Antes de retomarla se requiere:
 
 1. Integrar y publicar el código actual.
-2. Realizar una prueba de humo en la implementación productiva.
-3. Conservar el sistema anterior como opción de reversión.
-4. Revisar reporte y archivos al cierre del primer día.
+2. Preparar y validar el despliegue continuo en una rama independiente.
+3. Realizar una prueba de humo en la implementación productiva.
+4. Conservar el sistema anterior como opción de reversión.
+5. Revisar reporte y archivos al cierre del primer día.
 
 Orden recomendado posterior al lanzamiento:
 

@@ -31,7 +31,8 @@
 ## Fase 2 — Robustecimiento
 
 La fase 2 no agrega el flujo principal: reduce el costo de recuperación y mejora
-la trazabilidad cuando un servicio de Google falla.
+la trazabilidad cuando un servicio de Google falla. Su desarrollo se retomará
+después de implementar y validar el despliegue continuo.
 
 | Capacidad | Estado actual | Trabajo restante | Prioridad |
 | --- | --- | --- | --- |
@@ -56,11 +57,13 @@ Robustecimiento que ya contiene el proyecto:
 ## Fase 3 — Liberación
 
 - [x] Validar el flujo de aceptación y el PDF en la Web App.
-- [ ] Publicar los commits pendientes en el remoto.
-- [ ] Integrar la rama de reestructuración en `main`.
-- [ ] Confirmar o actualizar la URL del remoto renombrado.
-- [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.
+- [x] Publicar los commits de reestructuración en el remoto.
+- [x] Integrar la rama de reestructuración en `main` mediante avance rápido.
+- [x] Confirmar la URL del repositorio remoto.
+- [ ] Preparar el despliegue continuo en una rama independiente.
 - [ ] Crear o actualizar el despliegue productivo.
 - [ ] Ejecutar la prueba de humo en producción.
+- [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.
+- [ ] Crear la etiqueta `v2.0.0`.
 - [ ] Conservar el sistema anterior disponible para reversión durante el corte.
 - [ ] Archivar el sistema anterior como solo lectura después de estabilizar.

@@ -63,6 +63,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La bandeja de pendientes muestra el concepto como título operativo del recibo.
 - La creación masiva de contactos solicita confirmación, muestra errores dentro
   del diálogo y actualiza la lista inmediatamente después de guardar.
+- La documentación de instalación, arquitectura, pruebas y despliegue refleja
+  el cierre de la reestructuración y separa la futura automatización productiva.
 
 ### Eliminado
 
