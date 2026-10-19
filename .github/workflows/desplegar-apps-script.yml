@@ -1,0 +1,100 @@
+name: Desplegar manualmente Google Apps Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar_despliegue:
+        description: Confirmo el despliegue del commit actual de main en producción
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-script-production
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Verificar y desplegar
+    if: ${{ inputs.confirmar_despliegue }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v7.0.1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias reproducibles
+        run: npm ci
+
+      - name: Verificar el proyecto
+        run: npm run verificar
+
+      - name: Preparar credenciales de clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CLASPRC_JSON}" || -z "${CLASP_JSON}" ]]; then
+            echo "Faltan los secretos CLASPRC_JSON o CLASP_JSON del entorno production." >&2
+            exit 1
+          fi
+
+          printf '%s' "${CLASPRC_JSON}" > "${HOME}/.clasprc.json"
+          printf '%s' "${CLASP_JSON}" > .clasp.json
+          chmod 600 "${HOME}/.clasprc.json" .clasp.json
+
+          node -e "const fs = require('fs'); JSON.parse(fs.readFileSync(process.env.HOME + '/.clasprc.json', 'utf8')); const proyecto = JSON.parse(fs.readFileSync('.clasp.json', 'utf8')); if (typeof proyecto.scriptId !== 'string' || !proyecto.scriptId) throw new Error('CLASP_JSON no contiene scriptId'); if (String(proyecto.rootDir || '') !== '') throw new Error('CLASP_JSON debe configurar rootDir como cadena vacía'); if (proyecto.skipSubdirectories !== false) throw new Error('CLASP_JSON debe configurar skipSubdirectories como false');"
+
+      - name: Revisar archivos desplegables
+        run: npx clasp show-file-status
+
+      - name: Sincronizar código y actualizar deployment
+        env:
+          IDENTIFICADOR_DEPLOYMENT: ${{ vars.APPS_SCRIPT_DEPLOYMENT_ID }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${IDENTIFICADOR_DEPLOYMENT}" ]]; then
+            echo "Falta la variable APPS_SCRIPT_DEPLOYMENT_ID del entorno production." >&2
+            exit 1
+          fi
+
+          descripcion_version="$(git log -1 --pretty=%s)"
+          if [[ -z "${descripcion_version}" ]]; then
+            echo "No fue posible obtener el asunto del commit actual." >&2
+            exit 1
+          fi
+
+          deployments_disponibles="$(npx clasp list-deployments --json)"
+          printf '%s' "${deployments_disponibles}" | node -e "let entrada = ''; process.stdin.on('data', fragmento => entrada += fragmento); process.stdin.on('end', () => { const deployments = JSON.parse(entrada); const destino = deployments.find(deployment => deployment.deploymentId === process.env.IDENTIFICADOR_DEPLOYMENT); if (!destino) throw new Error('El deployment configurado no pertenece al proyecto de CLASP_JSON'); if (!Number.isInteger(destino.versionNumber)) throw new Error('APPS_SCRIPT_DEPLOYMENT_ID no debe apuntar al deployment @HEAD'); });"
+
+          npx clasp push --force
+
+          resultado_deployment="$(npx clasp update-deployment "${IDENTIFICADOR_DEPLOYMENT}" --description "${descripcion_version}" --json)"
+          numero_version="$(printf '%s' "${resultado_deployment}" | node -e "let entrada = ''; process.stdin.on('data', fragmento => entrada += fragmento); process.stdin.on('end', () => { const resultado = JSON.parse(entrada); if (!Number.isInteger(resultado.versionNumber)) process.exit(1); process.stdout.write(String(resultado.versionNumber)); });")"
+
+          {
+            echo "### Despliegue de Apps Script completado"
+            echo
+            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Versión de Apps Script: \`${numero_version}\`"
+            echo "- Descripción: ${descripcion_version}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Eliminar credenciales temporales
+        if: always()
+        run: |
+          rm -f "${HOME}/.clasprc.json"
+          rm -f .clasp.json

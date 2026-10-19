@@ -204,6 +204,37 @@ if (manifiesto.webapp?.executeAs !== "USER_DEPLOYING") {
   errores.push("appsscript.json: la aplicación web debe ejecutarse como USER_DEPLOYING.");
 }
 
+const paquete = JSON.parse(
+  sistemaArchivos.readFileSync(rutas.join(directorioProyecto, "package.json"), "utf8"),
+);
+if (paquete.devDependencies?.["@google/clasp"] !== "3.4.1") {
+  errores.push("package.json: clasp debe conservar una versión exacta y reproducible.");
+}
+
+const flujoDespliegue = sistemaArchivos.readFileSync(
+  rutas.join(
+    directorioProyecto,
+    ".github",
+    "workflows",
+    "desplegar-apps-script.yml",
+  ),
+  "utf8",
+);
+const contratosDespliegue = [
+  "workflow_dispatch:",
+  "environment: production",
+  "secrets.CLASPRC_JSON",
+  "secrets.CLASP_JSON",
+  "vars.APPS_SCRIPT_DEPLOYMENT_ID",
+  "npx clasp list-deployments --json",
+  "npx clasp push --force",
+  "npx clasp update-deployment",
+  "if: always()",
+];
+if (contratosDespliegue.some((contrato) => !flujoDespliegue.includes(contrato))) {
+  errores.push(".github/workflows/desplegar-apps-script.yml: faltan contratos del despliegue manual seguro.");
+}
+
 const plantillaPdf = sistemaArchivos.readFileSync(
   rutas.join(directorioProyecto, "src", "views", "pdf", "recibo.html"),
   "utf8",
