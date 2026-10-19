@@ -4,6 +4,10 @@ Esta paleta adapta la familia **Nautical Blues** para mantener continuidad
 visual entre Google Sites y la aplicación. Los tonos más profundos definen la
 jerarquía, mientras que el celeste se reserva para selecciones y contenedores.
 
+La guía se limita al sitio contenedor. Los componentes internos de la Web App
+obtienen sus colores de `src/views/styles/material.html` y no dependen del tema
+configurado en Google Sites.
+
 | Uso | Color | Aplicación recomendada |
 | --- | --- | --- |
 | Azul abisal | `#00072D` | Texto principal, títulos y contraste máximo |

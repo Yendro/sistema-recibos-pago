@@ -8,10 +8,19 @@ Pagos. La instalación principal comienza en el [README de la raíz](../README.m
 | Documento | Propósito | Audiencia |
 | --- | --- | --- |
 | [Arquitectura](ARQUITECTURA.md) | Explica componentes, almacenamiento, estados y consistencia | Desarrollo y soporte |
-| [Análisis de la fase 2](ANALISIS_FASE_2.md) | Distingue lo ya implementado del robustecimiento pendiente | Administración y desarrollo |
 | [Despliegue a producción](DESPLIEGUE_PRODUCCION.md) | Lista preparación, prueba de humo, corte y reversión | Responsable de la publicación |
 | [Implementación de pruebas](IMPLEMENTACION_PRUEBAS.md) | Prepara un proyecto aislado de Apps Script | Desarrollo y pruebas |
 | [Paleta para Google Sites](PALETA_GOOGLE_SITES.md) | Documenta los colores para integrar el sitio contenedor | Diseño y administración |
+| [Análisis de la fase 2](ANALISIS_FASE_2.md) | Distingue lo implementado del robustecimiento aplazado | Administración y desarrollo |
+
+## Estado de las guías
+
+- La instalación, inicialización y operación descritas corresponden a la
+  arquitectura sin Google Docs ni una hoja de configuración operativa.
+- El despliegue se realiza manualmente con `clasp` mientras se prepara la
+  automatización mediante GitHub Actions.
+- La fase de robustecimiento permanece documentada, pero no forma parte del
+  cierre de la rama de reestructuración.
 
 ## Documentos de versión
 
@@ -26,8 +35,9 @@ pendientes.
 
 ## Orden para la liberación 2.0.0
 
-1. Revisar el [análisis de la fase 2](ANALISIS_FASE_2.md).
-2. Ejecutar la [guía de despliegue](DESPLIEGUE_PRODUCCION.md).
-3. Completar la prueba de humo productiva.
-4. Cerrar `[Sin publicar]` como `2.0.0` con la fecha real del despliegue.
-5. Atender respaldos y reconciliación del reporte durante el robustecimiento.
+1. Integrar y verificar la rama de reestructuración en `main`.
+2. Preparar y validar el despliegue continuo en una rama independiente.
+3. Ejecutar la [guía de despliegue](DESPLIEGUE_PRODUCCION.md).
+4. Completar la prueba de humo productiva.
+5. Cerrar `[Sin publicar]` como `2.0.0` con la fecha real del despliegue.
+6. Atender respaldos y reconciliación del reporte durante el robustecimiento.

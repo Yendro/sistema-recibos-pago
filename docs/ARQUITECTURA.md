@@ -21,6 +21,17 @@
 | `src/shared` | Respuestas, fechas, normalización e importes en letra |
 | `src/views` | Interfaz, plantilla PDF y correo HTML |
 
+## Artefacto desplegable
+
+El proyecto local utiliza la raíz del repositorio como `rootDir` de `clasp`.
+`.claspignore` permite enviar `appsscript.json` y los archivos JavaScript y HTML
+de `src/`, pero excluye documentación, verificadores, pruebas y dependencias.
+
+`.clasp.json` identifica una instalación concreta y no se versiona. Antes de
+cualquier sincronización se debe confirmar si apunta a pruebas o producción. El
+repositorio conserva el código fuente autorizado; las ediciones directas en el
+editor de Apps Script pueden ser reemplazadas por el siguiente `clasp push`.
+
 ## Flujo de datos
 
 ```text

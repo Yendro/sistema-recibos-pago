@@ -1,8 +1,7 @@
 # Sistema de Recibos y Pagos
 
 Aplicación web de Google Apps Script para crear, firmar, documentar, enviar y
-consultar recibos sin utilizar Google Docs como motor de plantillas ni Google
-Sheets como fuente operativa.
+consultar recibos de pagos.
 
 El sistema está diseñado para una cuenta propietaria, operación de caja desde
 computadora o tableta y firma presencial con fotografía de evidencia.
@@ -21,10 +20,6 @@ computadora o tableta y firma presencial con fotografía de evidencia.
 - Reporte general derivado en Google Sheets.
 - Persistencia operativa en archivos JSON mensuales de Drive.
 - Índice operativo, caché de lecturas y bloqueo de escrituras concurrentes.
-- Interfaz responsive basada en Material Design 3 y Nautical Blues.
-
-El módulo de solicitudes, Google Forms y las plantillas de Google Docs quedaron
-fuera del alcance actual.
 
 ## Requisitos
 
@@ -124,7 +119,7 @@ versionEsperada: 4
 directorioRaizEnContenedor: true
 ```
 
-No se necesitan triggers, Google Forms ni un proyecto vinculado a Sheets.
+No se necesitan triggers ni un proyecto vinculado a Sheets.
 
 ## Implementación de la aplicación web
 
@@ -158,8 +153,11 @@ El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
 
 ## Actualización de una instalación
 
+Mientras no se habilite el despliegue continuo, las actualizaciones se publican
+manualmente desde una copia local vinculada al proyecto correcto de Apps Script:
+
 ```bash
-git pull
+git pull --ff-only
 npm ci
 npm run verificar
 clasp push
@@ -171,6 +169,10 @@ Script. La URL se mantiene cuando se edita la misma implementación.
 Ejecuta nuevamente `inicializarSistemaPruebas()` solo cuando el diagnóstico
 indique una versión de estructura anterior o falten propiedades. La función no
 duplica los recursos existentes.
+
+El repositorio es la fuente de verdad del código. Evita editar directamente los
+archivos dentro del editor de Apps Script porque una sincronización posterior
+con `clasp` puede reemplazarlos.
 
 ## Desarrollo
 
@@ -202,10 +204,10 @@ src/
 
 - [Índice de documentación](docs/README.md)
 - [Arquitectura y almacenamiento](docs/ARQUITECTURA.md)
-- [Análisis de la fase 2](docs/ANALISIS_FASE_2.md)
 - [Despliegue a producción](docs/DESPLIEGUE_PRODUCCION.md)
 - [Implementación y pruebas funcionales](docs/IMPLEMENTACION_PRUEBAS.md)
 - [Paleta para Google Sites](docs/PALETA_GOOGLE_SITES.md)
+- [Análisis de la fase 2](docs/ANALISIS_FASE_2.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 

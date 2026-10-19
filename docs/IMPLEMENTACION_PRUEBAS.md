@@ -8,13 +8,13 @@ corte definitivo consulta [Despliegue a producción](DESPLIEGUE_PRODUCCION.md).
 Una rama de Git no separa un proyecto de Apps Script. No ejecutes `clasp push`
 mientras `.clasp.json` conserve el identificador del sistema en producción.
 
-Esta rama debe vincularse con un proyecto independiente de Apps Script y con su
-propio despliegue. El inicializador creará directorios, configuración, datos y
-reporte exclusivos para la cuenta que lo ejecute.
+El código que se quiera validar debe vincularse con un proyecto independiente de
+Apps Script y con su propio despliegue. El inicializador creará directorios,
+configuración, datos y reporte exclusivos para la cuenta que lo ejecute.
 
 ## 1. Preparar el proyecto de Apps Script
 
-1. Confirma que Git está en `refactor/reestructuracion-completa`.
+1. Confirma la rama y el commit que se probarán con `git status` y `git log -1`.
 2. Crea un proyecto **independiente y standalone** en Apps Script con el nombre
    `sistema-recibos-pagos-pruebas`.
 3. Copia su identificador de proyecto.
@@ -29,7 +29,7 @@ reporte exclusivos para la cuenta que lo ejecute.
 Desde la raíz del repositorio:
 
 ```bash
-npm install
+npm ci
 npm run verificar
 clasp push
 ```
