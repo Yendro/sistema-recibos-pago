@@ -30,6 +30,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Creación masiva de contactos mediante filas editables o pegado desde hojas de
   cálculo.
 - Selección y eliminación múltiple de contactos en una sola operación.
+- Workflow manual de GitHub Actions para verificar, sincronizar y actualizar el
+  deployment productivo sin cambiar su URL.
 
 ### Modificado
 
@@ -65,6 +67,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   del diálogo y actualiza la lista inmediatamente después de guardar.
 - La documentación de instalación, arquitectura, pruebas y despliegue refleja
   el cierre de la reestructuración y separa la futura automatización productiva.
+- `clasp` queda fijado como dependencia local reproducible para los despliegues.
 
 ### Eliminado
 

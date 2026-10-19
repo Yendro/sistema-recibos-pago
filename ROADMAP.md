@@ -60,7 +60,10 @@ Robustecimiento que ya contiene el proyecto:
 - [x] Publicar los commits de reestructuración en el remoto.
 - [x] Integrar la rama de reestructuración en `main` mediante avance rápido.
 - [x] Confirmar la URL del repositorio remoto.
-- [ ] Preparar el despliegue continuo en una rama independiente.
+- [x] Preparar el workflow manual de despliegue en una rama independiente.
+- [ ] Configurar las credenciales del entorno `production` en GitHub.
+- [ ] Validar el workflow mediante una ejecución manual.
+- [ ] Habilitar el despliegue automático para cambios desplegables en `main`.
 - [ ] Crear o actualizar el despliegue productivo.
 - [ ] Ejecutar la prueba de humo en producción.
 - [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.

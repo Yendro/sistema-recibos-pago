@@ -16,8 +16,8 @@ de integración de Git.
   tiene un único responsable.
 - `[Sin publicar]` permanece en el changelog hasta que el despliegue productivo
   y su prueba de humo concluyan correctamente.
-- El despliegue continuo con GitHub Actions se preparará en una rama posterior.
-  Hasta validarlo, `clasp push` y la actualización de la Web App son manuales.
+- GitHub Actions contiene un workflow manual que debe validarse antes de
+  habilitar publicaciones automáticas desde `main`.
 - La fase de robustecimiento de datos se atenderá después de estabilizar la
   automatización de despliegues.
 
@@ -57,11 +57,16 @@ eliminación no es necesaria para continuar el desarrollo.
 
 ## 2. Preparar Apps Script
 
+El método recomendado es ejecutar **Desplegar manualmente Google Apps Script**
+desde GitHub Actions después de configurar el entorno `production` según la
+[guía de despliegue continuo](DESPLIEGUE_CONTINUO.md). Los pasos siguientes son
+el procedimiento local de respaldo.
+
 1. Confirma que `.clasp.json` apunta al proyecto productivo correcto:
 
    ```bash
-   clasp open
-   clasp deployments
+   npx clasp open-script
+   npx clasp list-deployments
    ```
 
 2. Ejecuta nuevamente las verificaciones locales:
@@ -74,7 +79,7 @@ eliminación no es necesaria para continuar el desarrollo.
 3. Sincroniza el código:
 
    ```bash
-   clasp push
+   npx clasp push
    ```
 
 `.clasp.json` y `.clasprc.json` son archivos locales con información sensible y
@@ -118,9 +123,9 @@ directorioRaizEnContenedor: true
    Configuración  → URL/exec?ruta=configuracion
    ```
 
-Cuando el workflow de GitHub Actions esté validado, sustituirá los pasos
-manuales de sincronización y actualización de la implementación, pero conservará
-el mismo identificador y la misma URL productiva.
+El workflow reutiliza el identificador del deployment y conserva la URL
+productiva. Una vez validada su ejecución manual se podrá habilitar el disparador
+automático para cambios desplegables integrados en `main`.
 
 ## 5. Prueba de humo productiva
 

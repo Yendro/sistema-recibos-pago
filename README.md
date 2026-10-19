@@ -24,12 +24,8 @@ computadora o tableta y firma presencial con fotografía de evidencia.
 ## Requisitos
 
 - Una cuenta de Google con acceso a Apps Script, Drive, Sheets y Mail.
-- [Node.js](https://nodejs.org/) y npm.
-- `clasp` instalado globalmente:
-
-  ```bash
-  npm install --global @google/clasp
-  ```
+- [Node.js](https://nodejs.org/) 20 o posterior y npm.
+- `clasp` instalado como dependencia local mediante `npm ci`.
 
 - Un proyecto independiente y _standalone_ de Google Apps Script, creado dentro
   de la carpeta de Drive donde se almacenarán las dependencias del sistema.
@@ -53,7 +49,7 @@ computadora o tableta y firma presencial con fotografía de evidencia.
 3. Inicia sesión en Google:
 
    ```bash
-   clasp login
+   npx clasp login
    ```
 
 4. Crea `.clasp.json` en la raíz. Este archivo es local y Git lo ignora:
@@ -73,7 +69,7 @@ computadora o tableta y firma presencial con fotografía de evidencia.
 5. Confirma que el `scriptId` corresponde al entorno correcto y sube el código:
 
    ```bash
-   clasp push
+   npx clasp push
    ```
 
 ## Inicialización de Google Apps Script
@@ -153,14 +149,18 @@ El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
 
 ## Actualización de una instalación
 
-Mientras no se habilite el despliegue continuo, las actualizaciones se publican
-manualmente desde una copia local vinculada al proyecto correcto de Apps Script:
+El repositorio incluye un workflow manual de GitHub Actions para desplegar el
+commit actual de `main` después de configurar el entorno `production`. Consulta
+la [guía de despliegue continuo](docs/DESPLIEGUE_CONTINUO.md).
+
+Como procedimiento de respaldo, las actualizaciones pueden publicarse desde una
+copia local vinculada al proyecto correcto de Apps Script:
 
 ```bash
 git pull --ff-only
 npm ci
 npm run verificar
-clasp push
+npx clasp push
 ```
 
 Después crea una versión nueva dentro de la implementación existente de Apps
@@ -205,6 +205,7 @@ src/
 - [Índice de documentación](docs/README.md)
 - [Arquitectura y almacenamiento](docs/ARQUITECTURA.md)
 - [Despliegue a producción](docs/DESPLIEGUE_PRODUCCION.md)
+- [Despliegue continuo](docs/DESPLIEGUE_CONTINUO.md)
 - [Implementación y pruebas funcionales](docs/IMPLEMENTACION_PRUEBAS.md)
 - [Paleta para Google Sites](docs/PALETA_GOOGLE_SITES.md)
 - [Análisis de la fase 2](docs/ANALISIS_FASE_2.md)

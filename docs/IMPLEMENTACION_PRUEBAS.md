@@ -31,7 +31,7 @@ Desde la raíz del repositorio:
 ```bash
 npm ci
 npm run verificar
-clasp push
+npx clasp push
 ```
 
 Antes de confirmar el `push`, verifica nuevamente que el `scriptId` sea el del

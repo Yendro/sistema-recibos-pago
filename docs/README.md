@@ -9,6 +9,7 @@ Pagos. La instalación principal comienza en el [README de la raíz](../README.m
 | --- | --- | --- |
 | [Arquitectura](ARQUITECTURA.md) | Explica componentes, almacenamiento, estados y consistencia | Desarrollo y soporte |
 | [Despliegue a producción](DESPLIEGUE_PRODUCCION.md) | Lista preparación, prueba de humo, corte y reversión | Responsable de la publicación |
+| [Despliegue continuo](DESPLIEGUE_CONTINUO.md) | Configura credenciales y ejecuta la publicación manual desde GitHub Actions | Desarrollo y administración |
 | [Implementación de pruebas](IMPLEMENTACION_PRUEBAS.md) | Prepara un proyecto aislado de Apps Script | Desarrollo y pruebas |
 | [Paleta para Google Sites](PALETA_GOOGLE_SITES.md) | Documenta los colores para integrar el sitio contenedor | Diseño y administración |
 | [Análisis de la fase 2](ANALISIS_FASE_2.md) | Distingue lo implementado del robustecimiento aplazado | Administración y desarrollo |
@@ -17,8 +18,8 @@ Pagos. La instalación principal comienza en el [README de la raíz](../README.m
 
 - La instalación, inicialización y operación descritas corresponden a la
   arquitectura sin Google Docs ni una hoja de configuración operativa.
-- El despliegue se realiza manualmente con `clasp` mientras se prepara la
-  automatización mediante GitHub Actions.
+- GitHub Actions contiene la primera etapa del despliegue: ejecución manual,
+  validada antes de habilitar publicaciones automáticas desde `main`.
 - La fase de robustecimiento permanece documentada, pero no forma parte del
   cierre de la rama de reestructuración.
 
