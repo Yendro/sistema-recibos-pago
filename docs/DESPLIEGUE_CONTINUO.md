@@ -1,11 +1,14 @@
 # Despliegue continuo con GitHub Actions
 
-## Alcance de la primera etapa
+## Alcance
 
-El workflow `.github/workflows/desplegar-apps-script.yml` permite publicar
-manualmente el commit actual de `main` desde la pestaña **Actions**. La ejecución
-automática por cada cambio desplegable se habilitará únicamente después de
-validar este procedimiento en producción.
+El workflow `.github/workflows/desplegar-apps-script.yml` publica
+automáticamente los cambios desplegables enviados a `main`. También permite
+publicar manualmente el commit actual de `main` desde la pestaña **Actions**.
+
+El disparador automático considera cambios en `src/`, el manifiesto, las reglas
+de `clasp`, las dependencias, el verificador y el propio workflow. Los cambios
+exclusivamente documentales no crean una versión nueva de Apps Script.
 
 El workflow:
 
@@ -120,6 +123,17 @@ sincronizó el código y actualizó el deployment productivo a la versión 14 si
 cambiar su URL. Posteriormente se validaron correctamente el flujo operativo,
 el PDF y el envío en la Web App productiva, por lo que el despliegue automático
 ya puede habilitarse.
+
+## 5. Ejecución automática
+
+Después de integrar un cambio desplegable en `main`, GitHub Actions ejecuta el
+mismo proceso verificado en la publicación manual. No requiere confirmación ni
+la modificación de secretos. La exclusión por rutas evita publicar cuando un
+commit solo cambia archivos de documentación.
+
+La ejecución manual permanece disponible desde **Actions > Desplegar Google
+Apps Script**. Solo puede publicar la rama `main` y requiere activar la
+confirmación del formulario.
 
 ## Seguridad y recuperación
 

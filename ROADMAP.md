@@ -63,7 +63,7 @@ Robustecimiento que ya contiene el proyecto:
 - [x] Preparar el workflow manual de despliegue en una rama independiente.
 - [x] Configurar las credenciales del entorno `production` en GitHub.
 - [x] Validar el workflow mediante una ejecución manual.
-- [ ] Habilitar el despliegue automático para cambios desplegables en `main`.
+- [x] Habilitar el despliegue automático para cambios desplegables en `main`.
 - [x] Crear o actualizar el despliegue productivo.
 - [x] Ejecutar la prueba de humo en producción.
 - [ ] Convertir `[Sin publicar]` del changelog en la versión `2.0.0`.

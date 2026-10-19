@@ -149,9 +149,10 @@ El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
 
 ## Actualización de una instalación
 
-El repositorio incluye un workflow manual de GitHub Actions para desplegar el
-commit actual de `main` después de configurar el entorno `production`. Consulta
-la [guía de despliegue continuo](docs/DESPLIEGUE_CONTINUO.md).
+El repositorio despliega automáticamente los cambios relevantes enviados a
+`main` mediante GitHub Actions. También conserva una ejecución manual para
+recuperación o control operativo. Consulta la
+[guía de despliegue continuo](docs/DESPLIEGUE_CONTINUO.md).
 
 Como procedimiento de respaldo, las actualizaciones pueden publicarse desde una
 copia local vinculada al proyecto correcto de Apps Script:

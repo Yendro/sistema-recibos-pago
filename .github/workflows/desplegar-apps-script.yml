@@ -1,6 +1,17 @@
-name: Desplegar manualmente Google Apps Script
+name: Desplegar Google Apps Script
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/desplegar-apps-script.yml"
+      - ".claspignore"
+      - "appsscript.json"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/verificar_proyecto.js"
+      - "src/**"
   workflow_dispatch:
     inputs:
       confirmar_despliegue:
@@ -18,7 +29,7 @@ concurrency:
 jobs:
   desplegar:
     name: Verificar y desplegar
-    if: ${{ inputs.confirmar_despliegue }}
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.confirmar_despliegue) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production

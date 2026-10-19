@@ -30,8 +30,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Creación masiva de contactos mediante filas editables o pegado desde hojas de
   cálculo.
 - Selección y eliminación múltiple de contactos en una sola operación.
-- Workflow manual de GitHub Actions para verificar, sincronizar y actualizar el
-  deployment productivo sin cambiar su URL.
+- Workflow manual y automático de GitHub Actions para verificar, sincronizar y
+  actualizar el deployment productivo sin cambiar su URL.
 
 ### Modificado
 
