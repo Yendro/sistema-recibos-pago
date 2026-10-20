@@ -53,36 +53,37 @@ function obtenerDatosOperacion() {
     if (!sistemaEstaInicializado_()) {
       return crearRespuestaExitosa_({ inicializado: false });
     }
-    const configuracion = obtenerConfiguracionCompleta_();
-    const recibosIndice = leerIndiceRecibos_().recibos;
-    const pendientes = filtrarYPaginarRecibos_(recibosIndice, {
-      estados: [ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF],
-      pagina: 1,
-      tamanoPagina: 100,
-    });
-    const historial = filtrarYPaginarRecibos_(recibosIndice, {
-      pagina: 1,
-      tamanoPagina: 25,
-    });
     return crearRespuestaExitosa_({
       inicializado: true,
-      resumen: obtenerResumenRecibos_(recibosIndice),
-      tiposRecibo: configuracion.tiposRecibo
-        .filter((tipo) => tipo.activo)
-        .map((tipo) => ({
-          identificadorTipoRecibo: tipo.identificadorTipoRecibo,
-          nombreTipoRecibo: tipo.nombreTipoRecibo,
-          nombreProveedor: tipo.nombreProveedor,
-        })),
-      contactos: configuracion.contactos
-        .filter((contacto) => contacto.activo)
-        .map((contacto) => ({
-          identificadorContacto: contacto.identificadorContacto,
-          nombre: contacto.nombre,
-          correoOriginal: contacto.correoOriginal,
-        })),
-      pendientes,
-      historial,
+      tiposRecibo: obtenerTiposReciboActivosParaOperacion_(),
+    });
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
+function obtenerEstadoRecibosOperacion() {
+  try {
+    if (!sistemaEstaInicializado_()) {
+      return crearRespuestaExitosa_({ inicializado: false });
+    }
+    return crearRespuestaExitosa_({
+      inicializado: true,
+      ...obtenerEstadoRecibosOperacion_(),
+    });
+  } catch (error) {
+    return crearRespuestaError_(error);
+  }
+}
+
+function obtenerContactosOperacion() {
+  try {
+    if (!sistemaEstaInicializado_()) {
+      return crearRespuestaExitosa_({ inicializado: false, contactos: [] });
+    }
+    return crearRespuestaExitosa_({
+      inicializado: true,
+      contactos: obtenerContactosActivosParaOperacion_(),
     });
   } catch (error) {
     return crearRespuestaError_(error);

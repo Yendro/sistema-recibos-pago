@@ -31,9 +31,10 @@ function obtenerConfiguracionCompleta_() {
 }
 
 function invalidarMemoriaTemporalConfiguracion_() {
-  CacheService.getScriptCache().remove(
-    CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB,
-  );
+  const memoriaTemporal = CacheService.getScriptCache();
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB);
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_OPERACION);
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.CONTACTOS_OPERACION);
 }
 
 function obtenerTiposRecibo_() {
@@ -49,6 +50,50 @@ function obtenerTipoReciboPorIdentificador_(identificadorTipoRecibo) {
   );
   if (!tipoRecibo) throw new Error("El tipo de recibo no existe.");
   return tipoRecibo;
+}
+
+function obtenerTiposReciboActivosParaOperacion_() {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const contenidoMemoriaTemporal = memoriaTemporal.get(
+    CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_OPERACION,
+  );
+  if (contenidoMemoriaTemporal) return JSON.parse(contenidoMemoriaTemporal);
+
+  const tiposRecibo = obtenerTiposRecibo_()
+    .filter((tipoRecibo) => tipoRecibo.activo)
+    .map((tipoRecibo) => ({
+      identificadorTipoRecibo: tipoRecibo.identificadorTipoRecibo,
+      nombreTipoRecibo: tipoRecibo.nombreTipoRecibo,
+      nombreProveedor: tipoRecibo.nombreProveedor,
+    }));
+  memoriaTemporal.put(
+    CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_OPERACION,
+    JSON.stringify(tiposRecibo),
+    600,
+  );
+  return tiposRecibo;
+}
+
+function obtenerContactosActivosParaOperacion_() {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const contenidoMemoriaTemporal = memoriaTemporal.get(
+    CLAVES_MEMORIA_TEMPORAL.CONTACTOS_OPERACION,
+  );
+  if (contenidoMemoriaTemporal) return JSON.parse(contenidoMemoriaTemporal);
+
+  const contactos = obtenerContactos_()
+    .filter((contacto) => contacto.activo)
+    .map((contacto) => ({
+      identificadorContacto: contacto.identificadorContacto,
+      nombre: contacto.nombre,
+      correoOriginal: contacto.correoOriginal,
+    }));
+  memoriaTemporal.put(
+    CLAVES_MEMORIA_TEMPORAL.CONTACTOS_OPERACION,
+    JSON.stringify(contactos),
+    600,
+  );
+  return contactos;
 }
 
 function guardarTipoRecibo(datosTipoRecibo, logotipoBase64) {

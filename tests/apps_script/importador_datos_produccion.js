@@ -130,7 +130,6 @@ function importarDatosProduccionParaPruebas() {
       directorioEstadoAnterior,
     );
     invalidarMemoriaTemporalConfiguracion_();
-    invalidarMemoriaTemporalResumenRecibos_();
 
     const manifiesto = {
       fechaImportacion: obtenerFechaIso_(new Date()),

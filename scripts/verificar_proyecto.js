@@ -1,5 +1,6 @@
 const sistemaArchivos = require("node:fs");
 const rutas = require("node:path");
+const maquinaVirtual = require("node:vm");
 
 const directorioProyecto = rutas.resolve(__dirname, "..");
 const errores = [];
@@ -50,6 +51,8 @@ const funcionesPublicasPermitidas = new Set([
   "inicializarSistemaPruebas",
   "diagnosticarSistema",
   "obtenerDatosOperacion",
+  "obtenerEstadoRecibosOperacion",
+  "obtenerContactosOperacion",
   "obtenerConfiguracionParaWeb",
   "guardarTipoRecibo",
   "eliminarTipoRecibo",
@@ -335,6 +338,87 @@ if (
 ) {
   errores.push(
     "src/repositories/recibos_drive.js: las mutaciones deben reutilizar el índice cargado durante la búsqueda.",
+  );
+}
+if (
+  !contenidoControladorWeb.includes("function obtenerEstadoRecibosOperacion()") ||
+  !contenidoControladorWeb.includes("function obtenerContactosOperacion()") ||
+  !repositorioRecibos.includes("function obtenerEstadoRecibosOperacion_()") ||
+  !repositorioRecibos.includes("function convertirReciboParaListado_(") ||
+  !repositorioRecibos.includes("actualizarMemoriaTemporalRecibos_(recibos);")
+) {
+  errores.push(
+    "operación: el arranque, el estado de recibos y los contactos deben cargarse de forma independiente y compacta.",
+  );
+}
+try {
+  const contextoPruebaRecibos = {
+    ESTADOS_RECIBO: {
+      PENDIENTE_FIRMA: "PENDIENTE_FIRMA",
+      FIRMADO: "FIRMADO",
+      ENVIADO: "ENVIADO",
+      ERROR_PDF: "ERROR_PDF",
+      ERROR_ENVIO: "ERROR_ENVIO",
+    },
+    normalizarTextoMayusculas_: (valor) => String(valor || "").toUpperCase(),
+    console,
+  };
+  maquinaVirtual.createContext(contextoPruebaRecibos);
+  maquinaVirtual.runInContext(repositorioRecibos, contextoPruebaRecibos);
+  const recibosSimulados = Array.from({ length: 298 }, (_, indice) => ({
+    identificadorRecibo: `identificador-${indice}`,
+    folio: `REC-${indice}`,
+    cliente: `CLIENTE ${indice}`,
+    concepto: `CONCEPTO ${indice}`,
+    importe: indice + 1,
+    nombreTipoRecibo: indice % 2 ? "GLR" : "PV",
+    estado: indice < 10 ? "PENDIENTE_FIRMA" : "ENVIADO",
+    urlPdf: indice < 10 ? "" : `https://drive.google.com/${indice}`,
+    fechaCreacion: new Date(2026, 8, (indice % 28) + 1).toISOString(),
+    identificadorArchivoDatos: "identificador-productivo",
+  }));
+  const estadoSimulado = contextoPruebaRecibos.construirEstadoRecibosOperacion_(
+    recibosSimulados,
+  );
+  const bytesEstadoSimulado = Buffer.byteLength(JSON.stringify(estadoSimulado));
+  if (
+    estadoSimulado.resumen.enviados !== 288 ||
+    estadoSimulado.pendientes.total !== 10 ||
+    estadoSimulado.historial.recibos.length !== 25 ||
+    bytesEstadoSimulado >= 95 * 1024 ||
+    Object.prototype.hasOwnProperty.call(
+      estadoSimulado.historial.recibos[0],
+      "identificadorArchivoDatos",
+    )
+  ) {
+    errores.push(
+      "src/repositories/recibos_drive.js: la proyección operativa simulada no respeta tamaño, conteos o privacidad.",
+    );
+  }
+} catch (error) {
+  errores.push(
+    `src/repositories/recibos_drive.js: no fue posible validar la proyección operativa: ${error.message}`,
+  );
+}
+const inicioArranqueOperacion = contenidoControladorWeb.indexOf(
+  "function obtenerDatosOperacion()",
+);
+const finArranqueOperacion = contenidoControladorWeb.indexOf(
+  "function obtenerEstadoRecibosOperacion()",
+);
+const arranqueOperacion = contenidoControladorWeb.slice(
+  inicioArranqueOperacion,
+  finArranqueOperacion,
+);
+if (
+  inicioArranqueOperacion < 0 ||
+  finArranqueOperacion <= inicioArranqueOperacion ||
+  arranqueOperacion.includes("leerIndiceRecibos_") ||
+  arranqueOperacion.includes("obtenerConfiguracionCompleta_") ||
+  arranqueOperacion.includes("contactos:")
+) {
+  errores.push(
+    "src/app/controllers/web.js: el arranque operativo no debe leer el índice, la configuración completa ni los contactos.",
   );
 }
 

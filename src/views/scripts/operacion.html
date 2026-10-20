@@ -5,6 +5,10 @@
     pendientes: [],
     historial: { recibos: [], pagina: 1, totalPaginas: 1, total: 0 },
     resumen: { pendientesFirma: 0, pendientesEnvio: 0, enviados: 0 },
+    datosRecibosCargados: false,
+    contactosCargados: false,
+    promesaDatosRecibos: null,
+    promesaContactos: null,
   };
   let identificadorReciboFirma = "";
   let identificadorReciboCorreo = "";
@@ -50,15 +54,10 @@
       document.getElementById("contenidoOperacion").classList.toggle("oculto", !datos.inicializado);
       if (!datos.inicializado) return;
       estadoOperacion.tiposRecibo = datos.tiposRecibo || [];
-      estadoOperacion.contactos = datos.contactos || [];
-      estadoOperacion.pendientes = datos.pendientes?.recibos || [];
-      estadoOperacion.historial = datos.historial;
-      estadoOperacion.resumen = datos.resumen;
       cargarSelectorTiposRecibo();
-      renderizarResumen();
-      renderizarPendientesFirma();
-      renderizarHistorial();
       cambiarSeccion(document.body.dataset.seccionInicial || "nuevo");
+      prepararIndicadoresCargaRecibos();
+      cargarEstadoRecibosOperacion().catch(() => {});
     } catch (error) {
       mostrarMensaje(error.message, true);
     } finally {
@@ -69,6 +68,68 @@
 
   function establecerContenidoCargando(cargando) {
     document.body.classList.toggle("datos-cargando", cargando);
+  }
+
+  function prepararIndicadoresCargaRecibos() {
+    ["cantidadPendientesFirma", "cantidadPendientesEnvio", "cantidadEnviados"]
+      .forEach((identificador) => {
+        document.getElementById(identificador).textContent = "—";
+      });
+    const pendientes = document.getElementById("listaPendientesFirma");
+    pendientes.replaceChildren(
+      crearEstadoVacio("refresh", "Cargando recibos pendientes…"),
+    );
+    const cuerpoHistorial = document.getElementById("tablaRecibos");
+    const fila = document.createElement("tr");
+    const celda = crearElementoTexto("td", "Cargando historial…", "vacio");
+    celda.colSpan = 6;
+    fila.append(celda);
+    cuerpoHistorial.replaceChildren(fila);
+    document.getElementById("indicadorPagina").textContent = "Cargando…";
+  }
+
+  async function cargarEstadoRecibosOperacion() {
+    if (estadoOperacion.datosRecibosCargados) return;
+    if (estadoOperacion.promesaDatosRecibos) {
+      return estadoOperacion.promesaDatosRecibos;
+    }
+
+    estadoOperacion.promesaDatosRecibos = (async () => {
+      const datos = exigirRespuestaExitosa(
+        await ejecutarServidor("obtenerEstadoRecibosOperacion"),
+      );
+      if (!datos.inicializado) throw new Error("El sistema todavía no está inicializado.");
+      estadoOperacion.pendientes = datos.pendientes?.recibos || [];
+      estadoOperacion.historial = datos.historial;
+      estadoOperacion.resumen = datos.resumen;
+      estadoOperacion.datosRecibosCargados = true;
+      renderizarResumen();
+      renderizarPendientesFirma();
+      renderizarHistorial();
+    })();
+
+    try {
+      await estadoOperacion.promesaDatosRecibos;
+    } catch (error) {
+      mostrarMensaje(error.message, true);
+      const pendientes = document.getElementById("listaPendientesFirma");
+      pendientes.replaceChildren(
+        crearEstadoVacio("close", "No fue posible cargar los recibos."),
+      );
+      const cuerpoHistorial = document.getElementById("tablaRecibos");
+      const fila = document.createElement("tr");
+      const celda = crearElementoTexto(
+        "td",
+        "No fue posible cargar el historial.",
+        "vacio",
+      );
+      celda.colSpan = 6;
+      fila.append(celda);
+      cuerpoHistorial.replaceChildren(fila);
+      throw error;
+    } finally {
+      estadoOperacion.promesaDatosRecibos = null;
+    }
   }
 
   function cambiarSeccion(nombreSeccion) {
@@ -235,6 +296,11 @@
     const filaInvalida = filas.find((fila) => !validarFilaCaptura(fila).valida);
     if (!filas.length) return mostrarMensaje("Completa al menos un recibo.", true);
     if (filaInvalida) return mostrarMensaje("Corrige las filas marcadas antes de continuar.", true);
+    try {
+      await cargarEstadoRecibosOperacion();
+    } catch (error) {
+      return;
+    }
     mostrarCarga(true, "Creando recibos pendientes…");
     try {
       const respuesta = await ejecutarServidor("crearRecibosMasivo", {
@@ -269,6 +335,7 @@
     const boton = document.getElementById("botonActualizarFirmas");
     establecerBotonProcesando(boton, true);
     try {
+      await cargarEstadoRecibosOperacion();
       const datos = exigirRespuestaExitosa(await ejecutarServidor("listarRecibos", {
         estados: ["PENDIENTE_FIRMA", "ERROR_PDF"], pagina: 1, tamanoPagina: 100,
       }));
@@ -427,7 +494,13 @@
       volverBandejaFirma();
       cambiarSeccion("historial");
       mostrarMensaje(respuesta.mensaje);
-      if (estadoOperacion.contactos.length) abrirDialogoCorreo(datos.recibo.identificadorRecibo);
+      cargarContactosOperacion()
+        .then(() => {
+          if (estadoOperacion.contactos.length) {
+            abrirDialogoCorreo(datos.recibo.identificadorRecibo);
+          }
+        })
+        .catch((error) => mostrarMensaje(error.message, true));
     } catch (error) {
       mostrarMensaje(error.message, true);
     } finally {
@@ -447,6 +520,7 @@
     const boton = document.getElementById("botonBuscarRecibos");
     establecerBotonProcesando(boton, true);
     try {
+      await cargarEstadoRecibosOperacion();
       estadoOperacion.historial = exigirRespuestaExitosa(await ejecutarServidor("listarRecibos", {
         pagina, tamanoPagina: 25,
         estado: document.getElementById("estadoRecibos").value,
@@ -600,27 +674,61 @@
     return "estado-advertencia";
   }
 
-  function abrirDialogoCorreo(identificadorRecibo) {
-    identificadorReciboCorreo = identificadorRecibo;
-    establecerDialogoCorreoProcesando(false);
+  async function cargarContactosOperacion() {
+    if (estadoOperacion.contactosCargados) return;
+    if (estadoOperacion.promesaContactos) return estadoOperacion.promesaContactos;
+    estadoOperacion.promesaContactos = (async () => {
+      const datos = exigirRespuestaExitosa(
+        await ejecutarServidor("obtenerContactosOperacion"),
+      );
+      estadoOperacion.contactos = datos.contactos || [];
+      estadoOperacion.contactosCargados = true;
+    })();
+    try {
+      await estadoOperacion.promesaContactos;
+    } finally {
+      estadoOperacion.promesaContactos = null;
+    }
+  }
+
+  function renderizarContactosCorreo() {
     const contenedor = document.getElementById("contactosCorreo");
     contenedor.replaceChildren();
     if (!estadoOperacion.contactos.length) {
       contenedor.append(crearEstadoVacio("mail", "Configura al menos un contacto activo."));
       document.getElementById("botonEnviarCorreo").disabled = true;
-    } else {
-      document.getElementById("botonEnviarCorreo").disabled = false;
-      estadoOperacion.contactos.forEach((contacto) => {
-        const etiqueta = document.createElement("label");
-        etiqueta.className = "elemento-contacto";
-        const casilla = document.createElement("input");
-        casilla.type = "checkbox";
-        casilla.value = contacto.identificadorContacto;
-        etiqueta.append(casilla, crearElementoTexto("span", `${contacto.nombre} · ${contacto.correoOriginal}`));
-        contenedor.append(etiqueta);
-      });
+      return;
     }
+    document.getElementById("botonEnviarCorreo").disabled = false;
+    estadoOperacion.contactos.forEach((contacto) => {
+      const etiqueta = document.createElement("label");
+      etiqueta.className = "elemento-contacto";
+      const casilla = document.createElement("input");
+      casilla.type = "checkbox";
+      casilla.value = contacto.identificadorContacto;
+      etiqueta.append(casilla, crearElementoTexto("span", `${contacto.nombre} · ${contacto.correoOriginal}`));
+      document.getElementById("contactosCorreo").append(etiqueta);
+    });
+  }
+
+  async function abrirDialogoCorreo(identificadorRecibo) {
+    identificadorReciboCorreo = identificadorRecibo;
+    establecerDialogoCorreoProcesando(false);
+    const contenedor = document.getElementById("contactosCorreo");
+    contenedor.replaceChildren(
+      crearEstadoVacio("refresh", "Cargando contactos…"),
+    );
+    document.getElementById("botonEnviarCorreo").disabled = true;
     document.getElementById("dialogoCorreo").showModal();
+    try {
+      await cargarContactosOperacion();
+      renderizarContactosCorreo();
+    } catch (error) {
+      contenedor.replaceChildren(
+        crearEstadoVacio("close", "No fue posible cargar los contactos."),
+      );
+      mostrarEstadoEnvioCorreo(error.message, true);
+    }
   }
 
   function mostrarEstadoEnvioCorreo(mensaje, esError = false) {

@@ -67,7 +67,7 @@ function guardarIndiceRecibos_(documento, recibos) {
     CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
     documento,
   );
-  invalidarMemoriaTemporalResumenRecibos_();
+  actualizarMemoriaTemporalRecibos_(recibos);
 }
 
 function actualizarIndiceRecibosCargado_(
@@ -138,8 +138,24 @@ function reconstruirIndiceRecibos_() {
 }
 
 function invalidarMemoriaTemporalResumenRecibos_() {
-  CacheService.getScriptCache().remove(
-    CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+  const memoriaTemporal = CacheService.getScriptCache();
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS);
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.ESTADO_RECIBOS_OPERACION);
+}
+
+function construirResumenRecibos_(recibos) {
+  return recibos.reduce(
+    (acumulado, recibo) => {
+      if ([ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF].includes(recibo.estado)) {
+        acumulado.pendientesFirma += 1;
+      }
+      if ([ESTADOS_RECIBO.FIRMADO, ESTADOS_RECIBO.ERROR_ENVIO].includes(recibo.estado)) {
+        acumulado.pendientesEnvio += 1;
+      }
+      if (recibo.estado === ESTADOS_RECIBO.ENVIADO) acumulado.enviados += 1;
+      return acumulado;
+    },
+    { pendientesFirma: 0, pendientesEnvio: 0, enviados: 0 },
   );
 }
 
@@ -153,25 +169,95 @@ function obtenerResumenRecibos_(recibosIndice) {
   }
 
   const recibos = recibosIndice || leerIndiceRecibos_().recibos;
-  const resumen = recibos.reduce(
-    (acumulado, recibo) => {
-      if ([ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF].includes(recibo.estado)) {
-        acumulado.pendientesFirma += 1;
-      }
-      if ([ESTADOS_RECIBO.FIRMADO, ESTADOS_RECIBO.ERROR_ENVIO].includes(recibo.estado)) {
-        acumulado.pendientesEnvio += 1;
-      }
-      if (recibo.estado === ESTADOS_RECIBO.ENVIADO) acumulado.enviados += 1;
-      return acumulado;
-    },
-    { pendientesFirma: 0, pendientesEnvio: 0, enviados: 0 },
-  );
+  const resumen = construirResumenRecibos_(recibos);
   memoriaTemporal.put(
     CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
     JSON.stringify(resumen),
-    300,
+    600,
   );
   return resumen;
+}
+
+function construirEstadoRecibosOperacion_(recibosIndice) {
+  return {
+    resumen: construirResumenRecibos_(recibosIndice),
+    pendientes: filtrarYPaginarRecibos_(recibosIndice, {
+      estados: [ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF],
+      pagina: 1,
+      tamanoPagina: 100,
+    }),
+    historial: filtrarYPaginarRecibos_(recibosIndice, {
+      pagina: 1,
+      tamanoPagina: 25,
+    }),
+  };
+}
+
+function guardarEstadoRecibosOperacionEnMemoria_(estado) {
+  const contenido = JSON.stringify(estado);
+  const limiteSeguroBytes = 95 * 1024;
+  if (Utilities.newBlob(contenido).getBytes().length > limiteSeguroBytes) {
+    CacheService.getScriptCache().remove(
+      CLAVES_MEMORIA_TEMPORAL.ESTADO_RECIBOS_OPERACION,
+    );
+    return false;
+  }
+  CacheService.getScriptCache().put(
+    CLAVES_MEMORIA_TEMPORAL.ESTADO_RECIBOS_OPERACION,
+    contenido,
+    600,
+  );
+  return true;
+}
+
+function actualizarMemoriaTemporalRecibos_(recibosIndice) {
+  try {
+    const memoriaTemporal = CacheService.getScriptCache();
+    const estado = construirEstadoRecibosOperacion_(recibosIndice);
+    memoriaTemporal.put(
+      CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+      JSON.stringify(estado.resumen),
+      600,
+    );
+    guardarEstadoRecibosOperacionEnMemoria_(estado);
+  } catch (error) {
+    invalidarMemoriaTemporalResumenRecibos_();
+    console.warn(`No se pudo actualizar la memoria temporal de recibos: ${error.message}`);
+  }
+}
+
+function obtenerEstadoRecibosOperacion_() {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const contenidoMemoriaTemporal = memoriaTemporal.get(
+    CLAVES_MEMORIA_TEMPORAL.ESTADO_RECIBOS_OPERACION,
+  );
+  if (contenidoMemoriaTemporal) return JSON.parse(contenidoMemoriaTemporal);
+
+  const estado = construirEstadoRecibosOperacion_(leerIndiceRecibos_().recibos);
+  try {
+    memoriaTemporal.put(
+      CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS,
+      JSON.stringify(estado.resumen),
+      600,
+    );
+    guardarEstadoRecibosOperacionEnMemoria_(estado);
+  } catch (error) {
+    console.warn(`No se pudo conservar la consulta en memoria temporal: ${error.message}`);
+  }
+  return estado;
+}
+
+function convertirReciboParaListado_(recibo) {
+  return {
+    identificadorRecibo: recibo.identificadorRecibo,
+    folio: recibo.folio,
+    cliente: recibo.cliente,
+    concepto: recibo.concepto,
+    importe: recibo.importe,
+    nombreTipoRecibo: recibo.nombreTipoRecibo,
+    estado: recibo.estado,
+    urlPdf: recibo.urlPdf,
+  };
 }
 
 function filtrarYPaginarRecibos_(recibosIndice, criterios) {
@@ -204,11 +290,9 @@ function filtrarYPaginarRecibos_(recibosIndice, criterios) {
     );
   const inicio = (pagina - 1) * tamanoPagina;
   return {
-    recibos: recibos.slice(inicio, inicio + tamanoPagina).map((recibo) => {
-      const reciboParaWeb = { ...recibo };
-      delete reciboParaWeb.identificadorArchivoDatos;
-      return reciboParaWeb;
-    }),
+    recibos: recibos
+      .slice(inicio, inicio + tamanoPagina)
+      .map(convertirReciboParaListado_),
     pagina,
     tamanoPagina,
     total: recibos.length,
