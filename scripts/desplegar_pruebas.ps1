@@ -45,7 +45,12 @@ try {
     )
   }
 
-  $proyectoPruebas = Get-Content -LiteralPath $RutaProyectoPruebas -Raw |
+  $rutaProyectoPruebasAbsoluta = (
+    Resolve-Path -LiteralPath $RutaProyectoPruebas
+  ).Path
+  $rutaIgnoradosAbsoluta = (Resolve-Path -LiteralPath ".claspignore").Path
+
+  $proyectoPruebas = Get-Content -LiteralPath $rutaProyectoPruebasAbsoluta -Raw |
     ConvertFrom-Json
   if (
     -not $proyectoPruebas.scriptId -or
@@ -70,10 +75,12 @@ try {
   & npm run verificar
   Confirmar-UltimoComandoNativo "La verificación del proyecto"
 
-  & npx clasp -P $RutaProyectoPruebas -I ".claspignore" show-file-status
+  & npx clasp -P $rutaProyectoPruebasAbsoluta -I $rutaIgnoradosAbsoluta `
+    show-file-status
   Confirmar-UltimoComandoNativo "La revisión de archivos desplegables"
 
-  & npx clasp -P $RutaProyectoPruebas -I ".claspignore" push --force
+  & npx clasp -P $rutaProyectoPruebasAbsoluta -I $rutaIgnoradosAbsoluta `
+    push --force
   Confirmar-UltimoComandoNativo "La sincronización con Apps Script de pruebas"
 
   $commitCorto = (& git rev-parse --short HEAD).Trim()
@@ -89,11 +96,12 @@ try {
       throw "$RutaEstadoDespliegue no contiene identificadorDeployment."
     }
 
-    $salidaDespliegue = & npx clasp -P $RutaProyectoPruebas update-deployment `
-      $identificadorDeployment --description $descripcion --json
+    $salidaDespliegue = & npx clasp -P $rutaProyectoPruebasAbsoluta `
+      update-deployment $identificadorDeployment --description $descripcion `
+      --json
     Confirmar-UltimoComandoNativo "La actualización del deployment de pruebas"
   } else {
-    $salidaDespliegue = & npx clasp --json -P $RutaProyectoPruebas `
+    $salidaDespliegue = & npx clasp --json -P $rutaProyectoPruebasAbsoluta `
       create-deployment --description $descripcion
     Confirmar-UltimoComandoNativo "La creación del deployment de pruebas"
     $resultadoDespliegue = ($salidaDespliegue -join [Environment]::NewLine) |
