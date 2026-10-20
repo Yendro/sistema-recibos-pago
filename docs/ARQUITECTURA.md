@@ -132,7 +132,11 @@ de un lote generado en ese instante.
 ## Seguridad
 
 - La implementación se ejecuta como la cuenta propietaria.
-- El manifiesto utiliza acceso `MYSELF`.
+- El manifiesto utiliza acceso `ANYONE`: requiere una sesión de Google, pero no
+  restringe por dominio porque la instalación pertenece a una cuenta personal.
+- No se utiliza `ANYONE_ANONYMOUS`; la aplicación nunca admite visitantes sin
+  sesión iniciada.
 - Drive conserva permisos privados para JSON, fotografías, firmas y PDF.
-- Google Sites debe restringirse a la misma cuenta.
+- Google Sites debe compartirse únicamente con los usuarios operativos. Sus
+  permisos no se heredan automáticamente en la Web App insertada.
 - `.clasp.json` no se versiona para evitar mezclar entornos.

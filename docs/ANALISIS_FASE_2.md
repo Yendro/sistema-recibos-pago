@@ -111,7 +111,7 @@ un corte omita un recibo por una falla temporal de Sheets.
 - Sintaxis de servidor y navegador.
 - Funciones públicas autorizadas.
 - Referencias entre scripts y elementos HTML.
-- Manifiesto y acceso restringido.
+- Manifiesto con ejecución propietaria, acceso autenticado y sin anonimato.
 - Ausencia de Google Docs, Forms y raíz de Mi unidad.
 - Contratos de imágenes PDF y eliminación de recibos.
 
