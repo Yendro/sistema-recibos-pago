@@ -32,6 +32,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - Selección y eliminación múltiple de contactos en una sola operación.
 - Workflow manual y automático de GitHub Actions para verificar, sincronizar y
   actualizar el deployment productivo sin cambiar su URL.
+- Comando local protegido para crear o actualizar un deployment aislado de
+  pruebas sin sustituir la configuración productiva de `clasp`.
 
 ### Modificado
 

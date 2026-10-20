@@ -2,7 +2,8 @@
   "name": "sistema-recibos-pagos",
   "private": true,
   "scripts": {
-    "verificar": "node scripts/verificar_proyecto.js"
+    "verificar": "node scripts/verificar_proyecto.js",
+    "desplegar:pruebas": "pwsh -NoProfile -File scripts/desplegar_pruebas.ps1"
   },
   "devDependencies": {
     "@google/clasp": "3.4.1",

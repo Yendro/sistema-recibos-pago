@@ -23,3 +23,5 @@ desktop.ini
 # clasp
 .clasprc.json
 .clasp.json
+.clasp.pruebas.json
+.despliegue-pruebas.json

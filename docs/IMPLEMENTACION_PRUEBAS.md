@@ -18,24 +18,47 @@ configuración, datos y reporte exclusivos para la cuenta que lo ejecute.
 2. Crea un proyecto **independiente y standalone** en Apps Script con el nombre
    `sistema-recibos-pagos-pruebas`.
 3. Copia su identificador de proyecto.
-4. Guarda fuera del repositorio una copia segura del `.clasp.json` que apunta a
-   producción.
-5. Sustituye localmente el valor `scriptId` de `.clasp.json` por el identificador
-   del proyecto de pruebas. Este archivo está ignorado por Git.
-6. No reutilices la hoja, carpetas ni despliegue de producción.
+4. Copia la plantilla local de configuración:
+
+   ```powershell
+   Copy-Item .clasp.pruebas.ejemplo.json .clasp.pruebas.json
+   ```
+
+5. Sustituye únicamente el valor `scriptId` de `.clasp.pruebas.json` por el
+   identificador del proyecto de pruebas. El archivo queda ignorado por Git.
+6. Conserva `.clasp.json` sin cambios. El comando de pruebas utiliza la opción
+   `-P` de `clasp` para seleccionar el proyecto aislado.
+7. No reutilices la hoja, carpetas ni despliegue de producción.
 
 ## 2. Verificar y subir el código
 
-Desde la raíz del repositorio:
+Registra primero un commit reproducible en la rama de trabajo y, desde la raíz
+del repositorio, ejecuta:
 
-```bash
+```powershell
 npm ci
 npm run verificar
-npx clasp push
+npm run desplegar:pruebas
 ```
 
-Antes de confirmar el `push`, verifica nuevamente que el `scriptId` sea el del
-proyecto de pruebas.
+El comando realiza las siguientes protecciones:
+
+- Rechaza la rama `main`.
+- Rechaza cambios sin commit, salvo que se solicite explícitamente una prueba
+  temporal con `-PermitirCambiosSinCommit`.
+- Comprueba que el `scriptId` de pruebas sea distinto del productivo.
+- Verifica el proyecto y muestra los archivos desplegables.
+- Sincroniza exclusivamente el proyecto definido en `.clasp.pruebas.json`.
+- Crea el primer deployment o actualiza el existente sin cambiar su URL.
+- Guarda el identificador local en `.despliegue-pruebas.json`, también ignorado
+  por Git.
+
+Al finalizar imprime las direcciones de Inicio, Operación y Configuración. Para
+una prueba temporal con cambios todavía no registrados puede utilizarse:
+
+```powershell
+pwsh -NoProfile -File scripts/desplegar_pruebas.ps1 -PermitirCambiosSinCommit
+```
 
 ## 3. Funciones que deben ejecutarse manualmente
 
@@ -81,18 +104,25 @@ hoja.
 
 ## 4. Crear el despliegue web
 
-1. En Apps Script selecciona **Implementar > Nueva implementación**.
-2. Elige **Aplicación web**.
-3. Ejecutar como: **yo**.
-4. Acceso: **solo yo**.
-5. Implementa y copia la URL terminada en `/exec`.
+La primera ejecución de `npm run desplegar:pruebas` crea el deployment con la
+configuración declarada en `appsscript.json`:
+
+- Ejecutar como: **usuario que implementa**.
+- Acceso: **solo yo**.
+
+Las siguientes ejecuciones crean una versión y actualizan el mismo deployment,
+por lo que la URL terminada en `/exec` permanece estable.
 
 El manifiesto también declara acceso `MYSELF`. Las páginas solo funcionarán en
 dispositivos donde la cuenta propietaria tenga una sesión iniciada.
 
 ## 5. Validar las rutas directamente
 
-Abre las tres rutas reemplazando `URL_IMPLEMENTACION`:
+Para trabajar en rendimiento basta con abrir Operación. Configuración se utiliza
+únicamente durante la preparación del entorno y la ruta de Inicio no necesita
+insertarse en el Google Site de pruebas.
+
+Las tres rutas continúan disponibles reemplazando `URL_IMPLEMENTACION`:
 
 ```text
 URL_IMPLEMENTACION
@@ -144,16 +174,21 @@ realiza exclusivamente desde el sidebar de Google Sites.
 22. Envía un recibo y confirma que su fila de historial no muestre la acción
     **Eliminar**.
 
-## 7. Integración con Google Sites
+## 7. Integración mínima con Google Sites
 
-Crea tres páginas de inserción completa y utiliza el sidebar nativo de Google
-Sites:
+Crea un Google Site privado de pruebas con una sola página de inserción
+completa:
 
 ```text
-Inicio         → ?ruta=inicio
 Operación      → ?ruta=operacion
-Configuración  → ?ruta=configuracion
 ```
+
+El despliegue conserva todas las rutas y el mismo código que producción; solo el
+contenedor de pruebas abre directamente la página operativa. Esta paridad evita
+validar una compilación especial que después no se publicaría.
+
+Cuando necesites preparar tipos o contactos, abre temporalmente
+`?ruta=configuracion` en una pestaña directa, sin agregarla al Site.
 
 Restringe el Google Site a la cuenta propietaria. El permiso del Site no
 reemplaza el permiso de la aplicación web; ambos deben quedar restringidos.
