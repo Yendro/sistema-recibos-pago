@@ -34,6 +34,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   actualizar el deployment productivo sin cambiar su URL.
 - Comando local protegido para crear o actualizar un deployment aislado de
   pruebas sin sustituir la configuración productiva de `clasp`.
+- Importador exclusivo de pruebas para copiar archivos mensuales productivos,
+  crear una instantánea auditable y reconstruir el índice con identificadores
+  aislados.
 
 ### Modificado
 
@@ -72,6 +75,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La documentación de instalación, arquitectura, pruebas y despliegue refleja
   el cierre de la reestructuración y separa la futura automatización productiva.
 - `clasp` queda fijado como dependencia local reproducible para los despliegues.
+- Los datos productivos copiados para medición omiten contactos, destinatarios,
+  PDF y evidencias, mientras los recibos históricos quedan bloqueados como
+  enviados dentro del entorno de pruebas.
 
 ### Eliminado
 

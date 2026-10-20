@@ -48,8 +48,9 @@ mantiene sin cambios:
 1. Despliega la rama mediante la
    [guía del entorno de pruebas](IMPLEMENTACION_PRUEBAS.md).
 2. Inserta únicamente `?ruta=operacion` en el Google Site de pruebas.
-3. Utiliza un conjunto representativo de recibos; un entorno vacío no permite
-   comparar la latencia asociada al índice.
+3. Utiliza un conjunto representativo de recibos. La
+   [copia controlada de datos](COPIA_DATOS_PRUEBAS.md) reproduce los archivos
+   mensuales sin conectar pruebas a los recursos operativos de producción.
 4. Ejecuta al menos cinco veces cada flujo y separa la primera ejecución de las
    siguientes:
    - Abrir Operación.

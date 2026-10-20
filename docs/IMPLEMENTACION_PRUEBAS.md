@@ -49,6 +49,8 @@ El comando realiza las siguientes protecciones:
 - Comprueba que el `scriptId` de pruebas sea distinto del productivo.
 - Verifica el proyecto y muestra los archivos desplegables.
 - Sincroniza exclusivamente el proyecto definido en `.clasp.pruebas.json`.
+- Incluye las herramientas de `tests/apps_script` mediante un archivo de
+  exclusión exclusivo; el despliegue productivo continúa omitiéndolas.
 - Crea el primer deployment o actualiza el existente sin cambiar su URL.
 - Guarda el identificador local en `.despliegue-pruebas.json`, también ignorado
   por Git.
@@ -210,3 +212,13 @@ Script. Antes de continuar con más funciones se deben revisar visualmente:
 
 Si la conversión nativa no conserva el diseño requerido, el repositorio ya
 separa la plantilla de los datos para sustituir únicamente el generador PDF.
+
+## 8. Utilizar un volumen representativo
+
+Para medir el rendimiento con los archivos mensuales de producción no cambies
+las propiedades operativas manualmente ni copies el índice productivo. Sigue la
+guía de [copia controlada de datos para pruebas](COPIA_DATOS_PRUEBAS.md).
+
+El importador exclusivo de pruebas genera una instantánea, sanea referencias a
+correo y evidencias, crea archivos mensuales propios y reconstruye el índice con
+los identificadores del entorno aislado.

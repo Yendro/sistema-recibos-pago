@@ -11,6 +11,7 @@ Pagos. La instalación principal comienza en el [README de la raíz](../README.m
 | [Despliegue a producción](DESPLIEGUE_PRODUCCION.md) | Lista preparación, prueba de humo, corte y reversión | Responsable de la publicación |
 | [Despliegue continuo](DESPLIEGUE_CONTINUO.md) | Configura credenciales y describe la publicación automática o manual desde GitHub Actions | Desarrollo y administración |
 | [Implementación de pruebas](IMPLEMENTACION_PRUEBAS.md) | Prepara un proyecto aislado de Apps Script | Desarrollo y pruebas |
+| [Copia de datos para pruebas](COPIA_DATOS_PRUEBAS.md) | Genera una instantánea y una copia operativa saneada de producción | Desarrollo y pruebas |
 | [Optimización de rendimiento](OPTIMIZACION_RENDIMIENTO.md) | Documenta la línea base, las mejoras aplicadas y su medición | Desarrollo y soporte |
 | [Paleta para Google Sites](PALETA_GOOGLE_SITES.md) | Documenta los colores para integrar el sitio contenedor | Diseño y administración |
 | [Análisis de la fase 2](ANALISIS_FASE_2.md) | Distingue lo implementado del robustecimiento aplazado | Administración y desarrollo |
