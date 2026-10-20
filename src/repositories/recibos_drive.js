@@ -55,17 +55,27 @@ function leerIndiceRecibos_() {
 
 function convertirReciboEnIndice_(recibo, identificadorArchivoDatos) {
   return {
-    ...recibo,
+    identificadorRecibo: recibo.identificadorRecibo,
+    folio: recibo.folio,
+    cliente: recibo.cliente,
+    concepto: recibo.concepto,
+    importe: recibo.importe,
+    nombreTipoRecibo: recibo.nombreTipoRecibo,
+    estado: recibo.estado,
+    urlPdf: recibo.urlPdf,
+    fechaCreacion: recibo.fechaCreacion,
     identificadorArchivoDatos,
   };
 }
 
 function guardarIndiceRecibos_(documento, recibos) {
   documento.version = Number(documento.version || 0) + 1;
+  documento.formato = 2;
   documento.recibos = recibos;
   guardarArchivoJsonPorPropiedad_(
     CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
     documento,
+    { compacto: true },
   );
   actualizarMemoriaTemporalRecibos_(recibos);
 }
@@ -412,7 +422,11 @@ function crearRecibosMasivo(datosLote) {
 
       documento.version = Number(documento.version || 0) + 1;
       documento.recibos = recibosExistentes.concat(nuevosRecibos);
-      guardarArchivoJsonPorIdentificador_(archivo.getId(), documento);
+      guardarArchivoJsonPorIdentificador_(
+        archivo.getId(),
+        documento,
+        { compacto: true },
+      );
       actualizarIndiceRecibosConRecuperacion_(nuevosRecibos, archivo.getId());
 
       return crearRespuestaExitosa_(
@@ -505,6 +519,7 @@ function eliminarReciboNoEnviado(identificadorRecibo) {
       guardarArchivoJsonPorIdentificador_(
         resultado.referencia.identificadorArchivo,
         resultado.documento,
+        { compacto: true },
       );
 
       const recibosIndiceActualizados = indice.recibos.filter(
@@ -555,6 +570,7 @@ function restaurarEliminacionRecibo_(
     guardarArchivoJsonPorIdentificador_(
       identificadorArchivoRecibos,
       documentoRecibosAnterior,
+      { compacto: true },
     );
   } catch (error) {
     errores.push(`archivo mensual: ${error.message}`);
@@ -563,6 +579,7 @@ function restaurarEliminacionRecibo_(
     guardarArchivoJsonPorPropiedad_(
       CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
       documentoIndiceAnterior,
+      { compacto: true },
     );
     invalidarMemoriaTemporalResumenRecibos_();
   } catch (error) {
@@ -656,6 +673,7 @@ function guardarReciboEncontrado_(resultadoBusqueda) {
   guardarArchivoJsonPorIdentificador_(
     resultadoBusqueda.referencia.identificadorArchivo,
     resultadoBusqueda.documento,
+    { compacto: true },
   );
   actualizarIndiceRecibosConRecuperacion_(
     resultadoBusqueda.recibo,

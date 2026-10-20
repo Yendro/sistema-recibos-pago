@@ -130,14 +130,28 @@ function leerArchivoJsonPorIdentificador_(identificadorArchivo) {
   }
 }
 
-function guardarArchivoJsonPorPropiedad_(clavePropiedad, contenido) {
+function guardarArchivoJsonPorPropiedad_(clavePropiedad, contenido, opciones) {
   const identificadorArchivo = obtenerPropiedadObligatoria_(clavePropiedad);
-  guardarArchivoJsonPorIdentificador_(identificadorArchivo, contenido);
+  guardarArchivoJsonPorIdentificador_(identificadorArchivo, contenido, opciones);
 }
 
-function guardarArchivoJsonPorIdentificador_(identificadorArchivo, contenido) {
+/**
+ * Sobrescribe un documento JSON. Los archivos de configuración conservan
+ * sangría para facilitar su diagnóstico; los documentos operativos pueden
+ * solicitar una serialización compacta para reducir transferencia a Drive.
+ *
+ * @param {string} identificadorArchivo Archivo que se sobrescribirá.
+ * @param {Object} contenido Documento serializable.
+ * @param {{compacto?: boolean}=} opciones Opciones de almacenamiento.
+ */
+function guardarArchivoJsonPorIdentificador_(
+  identificadorArchivo,
+  contenido,
+  opciones,
+) {
+  const sangria = opciones?.compacto ? undefined : 2;
   DriveApp.getFileById(identificadorArchivo).setContent(
-    JSON.stringify(contenido, null, 2),
+    JSON.stringify(contenido, null, sangria),
   );
 }
 

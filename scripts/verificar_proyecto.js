@@ -335,6 +335,16 @@ const repositorioRecibos = sistemaArchivos.readFileSync(
   rutas.join(directorioProyecto, "src", "repositories", "recibos_drive.js"),
   "utf8",
 );
+const almacenamientoDrive = sistemaArchivos.readFileSync(
+  rutas.join(
+    directorioProyecto,
+    "src",
+    "services",
+    "google",
+    "almacenamiento_drive.js",
+  ),
+  "utf8",
+);
 if (
   !repositorioRecibos.includes("recibo.estado === ESTADOS_RECIBO.ENVIADO") ||
   !repositorioRecibos.includes("eliminarReciboDeReporte_(identificadorRecibo)")
@@ -359,6 +369,15 @@ if (
 ) {
   errores.push(
     "operación: el arranque, el estado de recibos y los contactos deben cargarse de forma independiente y compacta.",
+  );
+}
+if (
+  !repositorioRecibos.includes("documento.formato = 2;") ||
+  !repositorioRecibos.includes("{ compacto: true },") ||
+  !almacenamientoDrive.includes("opciones?.compacto ? undefined : 2")
+) {
+  errores.push(
+    "persistencia: el índice y los documentos operativos deben conservar su serialización compacta.",
   );
 }
 try {
@@ -390,6 +409,35 @@ try {
   const estadoSimulado = contextoPruebaRecibos.construirEstadoRecibosOperacion_(
     recibosSimulados,
   );
+  const reciboCompleto = {
+    ...recibosSimulados[0],
+    identificadorTipoRecibo: "tipo-interno",
+    nombreEmpresa: "EMPRESA",
+    nombreProveedor: "PROVEEDOR",
+    importeLetra: "UN PESO",
+    fechaPago: "2026-09-01",
+    fechaActualizacion: "2026-09-01T00:00:00.000Z",
+    identificadorFirma: "firma-privada",
+    identificadorFotografia: "fotografia-privada",
+    identificadorPdf: "pdf-privado",
+    destinatarios: ["correo@example.com"],
+  };
+  const reciboIndice = contextoPruebaRecibos.convertirReciboEnIndice_(
+    reciboCompleto,
+    "archivo-mensual",
+  );
+  const camposIndiceEsperados = [
+    "cliente",
+    "concepto",
+    "estado",
+    "fechaCreacion",
+    "folio",
+    "identificadorArchivoDatos",
+    "identificadorRecibo",
+    "importe",
+    "nombreTipoRecibo",
+    "urlPdf",
+  ];
   const bytesEstadoSimulado = Buffer.byteLength(JSON.stringify(estadoSimulado));
   if (
     estadoSimulado.resumen.enviados !== 288 ||
@@ -399,7 +447,10 @@ try {
     Object.prototype.hasOwnProperty.call(
       estadoSimulado.historial.recibos[0],
       "identificadorArchivoDatos",
-    )
+    ) ||
+    JSON.stringify(Object.keys(reciboIndice).sort()) !==
+      JSON.stringify(camposIndiceEsperados) ||
+    reciboIndice.identificadorArchivoDatos !== "archivo-mensual"
   ) {
     errores.push(
       "src/repositories/recibos_drive.js: la proyección operativa simulada no respeta tamaño, conteos o privacidad.",
