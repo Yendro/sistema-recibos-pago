@@ -70,11 +70,14 @@ function guardarIndiceRecibos_(documento, recibos) {
   invalidarMemoriaTemporalResumenRecibos_();
 }
 
-function actualizarIndiceRecibos_(recibosActualizados, identificadorArchivoDatos) {
+function actualizarIndiceRecibosCargado_(
+  indice,
+  recibosActualizados,
+  identificadorArchivoDatos,
+) {
   const actualizaciones = Array.isArray(recibosActualizados)
     ? recibosActualizados
     : [recibosActualizados];
-  const indice = leerIndiceRecibos_();
   const posiciones = new Map(
     indice.recibos.map((recibo, posicion) => [recibo.identificadorRecibo, posicion]),
   );
@@ -98,9 +101,15 @@ function actualizarIndiceRecibos_(recibosActualizados, identificadorArchivoDatos
 function actualizarIndiceRecibosConRecuperacion_(
   recibosActualizados,
   identificadorArchivoDatos,
+  indiceCargado,
 ) {
   try {
-    actualizarIndiceRecibos_(recibosActualizados, identificadorArchivoDatos);
+    const indice = indiceCargado || leerIndiceRecibos_();
+    actualizarIndiceRecibosCargado_(
+      indice,
+      recibosActualizados,
+      identificadorArchivoDatos,
+    );
   } catch (error) {
     console.warn(`Se reconstruirá el índice operativo: ${error.message}`);
     reconstruirIndiceRecibos_();
@@ -400,7 +409,7 @@ function eliminarReciboNoEnviado(identificadorRecibo) {
     const documentoRecibosAnterior = JSON.parse(
       JSON.stringify(resultado.documento),
     );
-    const indice = leerIndiceRecibos_();
+    const indice = resultado.indice;
     const documentoIndiceAnterior = JSON.parse(
       JSON.stringify(indice.documento),
     );
@@ -514,9 +523,13 @@ function enviarArchivosReciboPapelera_(recibo) {
 }
 
 function encontrarRecibo_(identificadorRecibo) {
-  const referenciaIndice = leerIndiceRecibos_().recibos.find(
+  const indice = leerIndiceRecibos_();
+  const posicionIndice = indice.recibos.findIndex(
     (recibo) => recibo.identificadorRecibo === identificadorRecibo,
   );
+  const referenciaIndice = posicionIndice >= 0
+    ? indice.recibos[posicionIndice]
+    : null;
   const referenciasExistentes = obtenerDocumentosRecibosExistentes_();
   const referencias = referenciaIndice?.identificadorArchivoDatos
     ? [
@@ -536,6 +549,8 @@ function encontrarRecibo_(identificadorRecibo) {
     );
     if (posicion >= 0) {
       return {
+        indice,
+        posicionIndice,
         referencia: {
           ...referencia,
           identificadorArchivo: referencia.identificadorArchivo,
@@ -561,6 +576,7 @@ function guardarReciboEncontrado_(resultadoBusqueda) {
   actualizarIndiceRecibosConRecuperacion_(
     resultadoBusqueda.recibo,
     resultadoBusqueda.referencia.identificadorArchivo,
+    resultadoBusqueda.indice,
   );
 }
 

@@ -37,6 +37,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 
 ### Modificado
 
+- Las mutaciones de recibos reutilizan el índice cargado durante la búsqueda y
+  evitan una segunda lectura completa antes de persistir el cambio.
 - Las dependencias se crean dentro de la carpeta que contiene el proyecto de
   Apps Script; las instalaciones existentes se mueven sin cambiar sus IDs.
 - Captura, pendientes de firma, historial y correo comparten la ruta

@@ -261,6 +261,15 @@ if (
 ) {
   errores.push("src/repositories/recibos_drive.js: la eliminación debe proteger enviados y limpiar el reporte.");
 }
+if (
+  !repositorioRecibos.includes("function actualizarIndiceRecibosCargado_(") ||
+  !repositorioRecibos.includes("const indice = resultado.indice;") ||
+  !repositorioRecibos.includes("resultadoBusqueda.indice,")
+) {
+  errores.push(
+    "src/repositories/recibos_drive.js: las mutaciones deben reutilizar el índice cargado durante la búsqueda.",
+  );
+}
 
 const interfazOperacion = sistemaArchivos.readFileSync(
   rutas.join(directorioProyecto, "src", "views", "scripts", "operacion.html"),
