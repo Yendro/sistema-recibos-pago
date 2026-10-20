@@ -48,6 +48,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - El estado operativo utiliza una proyección compacta en caché que se actualiza
   junto con cada escritura del índice, sin convertir la caché en fuente de
   verdad.
+- El índice derivado conserva solo los campos requeridos para localizar, contar
+  y listar recibos; los documentos operativos se serializan sin sangría para
+  reducir el volumen transferido a Drive.
 - La Web App permite el acceso de usuarios con sesión de Google mediante
   `ANYONE`, conserva la ejecución como propietario y continúa rechazando acceso
   anónimo.

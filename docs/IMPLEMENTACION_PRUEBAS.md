@@ -97,7 +97,7 @@ Ejecútala después de inicializar. El resultado debe mostrar:
 
 ```text
 inicializado: true
-versionEsperada: 4
+versionEsperada: 5
 directorioRaizEnContenedor: true
 ```
 

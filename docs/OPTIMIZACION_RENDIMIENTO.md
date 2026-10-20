@@ -3,8 +3,9 @@
 ## Objetivo
 
 Reducir la espera percibida durante la creación, consulta y firma de recibos sin
-cambiar la fuente de verdad, el formato de los JSON ni el comportamiento
-funcional validado en producción.
+cambiar la fuente de verdad ni el comportamiento funcional validado en
+producción. Los archivos mensuales conservan el recibo completo; el índice,
+por ser un dato reconstruible, puede utilizar una proyección más pequeña.
 
 ## Línea base revisada
 
@@ -68,6 +69,29 @@ La caché es una aceleración y no una fuente de verdad. Si Google la expulsa o 
 está disponible, el sistema vuelve a leer `indice-recibos.json`, reconstruye la
 respuesta y continúa operando. Un fallo de caché nunca invalida una escritura.
 
+## Tercera implementación: índice derivado compacto
+
+La muestra de 298 recibos tenía un índice de 358.35 KB porque cada entrada
+duplicaba todos los campos conservados en el archivo mensual. Ese contenido se
+descargaba y sobrescribía en cada mutación aunque la interfaz y la localización
+de un recibo solo necesitan diez campos.
+
+La versión de estructura 5 reconstruye `indice-recibos.json` con:
+
+- Identificador, folio, cliente, concepto e importe.
+- Nombre del tipo, estado, URL del PDF y fecha de creación.
+- Identificador del archivo mensual que conserva el recibo completo.
+
+El índice y los archivos mensuales se serializan sin espacios de presentación
+al ser escritos. Esto no elimina información del recibo: firma, fotografía,
+destinatarios, fechas operativas y demás campos permanecen en su archivo
+mensual y en los artefactos correspondientes.
+
+Después de desplegar esta implementación debe ejecutarse nuevamente
+`inicializarSistemaPruebas()`. El inicializador es idempotente, reutiliza los
+recursos existentes y reconstruye el índice compacto a partir de los archivos
+mensuales ya importados.
+
 ## Validación en el entorno aislado
 
 1. Despliega la rama mediante la
@@ -90,14 +114,15 @@ respuesta y continúa operando. Un fallo de caché nunca invalida una escritura.
 
 Para validar la carga progresiva con los 298 registros importados:
 
-1. Abre Operación después de desplegar y mide por separado el tiempo hasta que
+1. Ejecuta `inicializarSistemaPruebas()` y confirma `versionEsperada: 5`.
+2. Abre Operación después de desplegar y mide por separado el tiempo hasta que
    aparece la captura y el tiempo hasta que termina el historial.
-2. Recarga la ruta dentro de los siguientes diez minutos. El estado de recibos
+3. Recarga la ruta dentro de los siguientes diez minutos. El estado de recibos
    debe resolverse desde la proyección en caché.
-3. Crea un recibo de prueba y vuelve a cargar. La captura y el historial deben
+4. Crea un recibo de prueba y vuelve a cargar. La captura y el historial deben
    conservar el comportamiento rápido sin esperar una lectura adicional para
    reconstruir la caché.
-4. Abre el diálogo de envío y confirma que los contactos se carguen en ese
+5. Abre el diálogo de envío y confirma que los contactos se carguen en ese
    momento, sin formar parte de la apertura inicial.
 
 ## Siguientes optimizaciones candidatas
