@@ -191,13 +191,30 @@ function crearArchivoDesdeBase64_(
 
 function obtenerArchivoComoUrlDatos_(identificadorArchivo) {
   if (!identificadorArchivo) return "";
+  const memoriaTemporal = CacheService.getScriptCache();
+  const claveMemoriaTemporal = `IMAGEN_URL_DATOS_V5_${identificadorArchivo}`;
+  try {
+    const contenidoMemoriaTemporal = memoriaTemporal.get(claveMemoriaTemporal);
+    if (contenidoMemoriaTemporal) return contenidoMemoriaTemporal;
+  } catch (error) {
+    console.warn(`No se pudo consultar la imagen en memoria temporal: ${error.message}`);
+  }
+
   const blob = DriveApp.getFileById(identificadorArchivo).getBlob();
   const bytes = blob.getBytes();
   const tipoContenido = detectarTipoContenidoImagen_(blob.getContentType(), bytes);
   if (!tipoContenido) {
     throw new Error("El archivo de imagen almacenado no es PNG ni JPEG.");
   }
-  return `data:${tipoContenido};base64,${Utilities.base64Encode(bytes)}`;
+  const urlDatos = `data:${tipoContenido};base64,${Utilities.base64Encode(bytes)}`;
+  try {
+    if (Utilities.newBlob(urlDatos).getBytes().length <= 95 * 1024) {
+      memoriaTemporal.put(claveMemoriaTemporal, urlDatos, 21600);
+    }
+  } catch (error) {
+    console.warn(`No se pudo conservar la imagen en memoria temporal: ${error.message}`);
+  }
+  return urlDatos;
 }
 
 /**

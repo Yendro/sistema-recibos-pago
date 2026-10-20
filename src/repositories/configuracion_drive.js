@@ -33,19 +33,47 @@ function obtenerConfiguracionCompleta_() {
 function invalidarMemoriaTemporalConfiguracion_() {
   const memoriaTemporal = CacheService.getScriptCache();
   memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.CONFIGURACION_WEB);
+  memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_COMPLETOS);
   memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_OPERACION);
   memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.CONTACTOS_OPERACION);
 }
 
 function obtenerTiposRecibo_() {
+  const memoriaTemporal = CacheService.getScriptCache();
+  try {
+    const contenidoMemoriaTemporal = memoriaTemporal.get(
+      CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_COMPLETOS,
+    );
+    if (contenidoMemoriaTemporal) return JSON.parse(contenidoMemoriaTemporal);
+  } catch (error) {
+    memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_COMPLETOS);
+    console.warn(
+      `No se pudieron consultar los tipos de recibo en memoria temporal: ${error.message}`,
+    );
+  }
+
   const documento = leerArchivoJsonPorPropiedad_(
     CLAVES_PROPIEDADES.ARCHIVO_TIPOS_RECIBO,
   );
-  return Array.isArray(documento.tiposRecibo) ? documento.tiposRecibo : [];
+  const tiposRecibo = Array.isArray(documento.tiposRecibo)
+    ? documento.tiposRecibo
+    : [];
+  try {
+    memoriaTemporal.put(
+      CLAVES_MEMORIA_TEMPORAL.TIPOS_RECIBO_COMPLETOS,
+      JSON.stringify(tiposRecibo),
+      21600,
+    );
+  } catch (error) {
+    console.warn(
+      `No se pudieron conservar los tipos de recibo en memoria temporal: ${error.message}`,
+    );
+  }
+  return tiposRecibo;
 }
 
 function obtenerTipoReciboPorIdentificador_(identificadorTipoRecibo) {
-  const tipoRecibo = obtenerConfiguracionCompleta_().tiposRecibo.find(
+  const tipoRecibo = obtenerTiposRecibo_().find(
     (tipo) => tipo.identificadorTipoRecibo === identificadorTipoRecibo,
   );
   if (!tipoRecibo) throw new Error("El tipo de recibo no existe.");

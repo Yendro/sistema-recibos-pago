@@ -47,9 +47,11 @@ function leerIndiceRecibos_() {
   const documento = leerArchivoJsonPorPropiedad_(
     CLAVES_PROPIEDADES.ARCHIVO_INDICE_RECIBOS,
   );
+  const recibos = Array.isArray(documento.recibos) ? documento.recibos : [];
+  guardarMapaArchivosRecibosEnMemoria_(recibos);
   return {
     documento,
-    recibos: Array.isArray(documento.recibos) ? documento.recibos : [],
+    recibos,
   };
 }
 
@@ -151,6 +153,173 @@ function invalidarMemoriaTemporalResumenRecibos_() {
   const memoriaTemporal = CacheService.getScriptCache();
   memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.RESUMEN_RECIBOS);
   memoriaTemporal.remove(CLAVES_MEMORIA_TEMPORAL.ESTADO_RECIBOS_OPERACION);
+  invalidarMapaArchivosRecibosEnMemoria_();
+}
+
+function construirMapaArchivosRecibos_(recibosIndice) {
+  return (recibosIndice || []).reduce((mapa, recibo) => {
+    if (recibo.identificadorRecibo && recibo.identificadorArchivoDatos) {
+      mapa[recibo.identificadorRecibo] = recibo.identificadorArchivoDatos;
+    }
+    return mapa;
+  }, {});
+}
+
+function obtenerNumeroSegmentoMapaRecibos_(identificadorRecibo) {
+  const texto = String(identificadorRecibo || "");
+  let valor = 0;
+  for (let posicion = 0; posicion < texto.length; posicion += 1) {
+    valor = (valor * 31 + texto.charCodeAt(posicion)) >>> 0;
+  }
+  return valor % 16;
+}
+
+function obtenerClaveSegmentoMapaRecibos_(numeroSegmento) {
+  return `${CLAVES_MEMORIA_TEMPORAL.MAPA_ARCHIVOS_RECIBOS}_${numeroSegmento}`;
+}
+
+function obtenerClavesSegmentosMapaRecibos_() {
+  return Array.from({ length: 16 }, (_, indice) =>
+    obtenerClaveSegmentoMapaRecibos_(indice),
+  );
+}
+
+function construirSegmentosMapaArchivosRecibos_(recibosIndice) {
+  const segmentos = Array.from({ length: 16 }, () => ({}));
+  Object.entries(construirMapaArchivosRecibos_(recibosIndice)).forEach(
+    ([identificadorRecibo, identificadorArchivo]) => {
+      const numeroSegmento = obtenerNumeroSegmentoMapaRecibos_(
+        identificadorRecibo,
+      );
+      segmentos[numeroSegmento][identificadorRecibo] = identificadorArchivo;
+    },
+  );
+  return segmentos;
+}
+
+function invalidarMapaArchivosRecibosEnMemoria_() {
+  try {
+    CacheService.getScriptCache().removeAll(
+      obtenerClavesSegmentosMapaRecibos_(),
+    );
+  } catch (error) {
+    console.warn(
+      `No se pudo invalidar el mapa de recibos en memoria temporal: ${error.message}`,
+    );
+  }
+}
+
+function guardarMapaArchivosRecibosEnMemoria_(recibosIndice) {
+  const memoriaTemporal = CacheService.getScriptCache();
+  try {
+    const limiteSeguroBytes = 95 * 1024;
+    const valores = {};
+    construirSegmentosMapaArchivosRecibos_(recibosIndice).forEach(
+      (segmento, numeroSegmento) => {
+        const contenido = JSON.stringify(segmento);
+        if (Utilities.newBlob(contenido).getBytes().length > limiteSeguroBytes) {
+          throw new Error(
+            `El segmento ${numeroSegmento} supera el límite seguro de caché.`,
+          );
+        }
+        valores[obtenerClaveSegmentoMapaRecibos_(numeroSegmento)] = contenido;
+      },
+    );
+    memoriaTemporal.putAll(valores, 21600);
+    return true;
+  } catch (error) {
+    invalidarMapaArchivosRecibosEnMemoria_();
+    console.warn(
+      `No se pudo conservar el mapa de recibos en memoria temporal: ${error.message}`,
+    );
+    return false;
+  }
+}
+
+function obtenerIdentificadorArchivoReciboEnMemoria_(identificadorRecibo) {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const numeroSegmento = obtenerNumeroSegmentoMapaRecibos_(identificadorRecibo);
+  const claveSegmento = obtenerClaveSegmentoMapaRecibos_(numeroSegmento);
+  try {
+    const contenido = memoriaTemporal.get(claveSegmento);
+    if (!contenido) return "";
+    const mapa = JSON.parse(contenido);
+    return String(mapa[identificadorRecibo] || "");
+  } catch (error) {
+    memoriaTemporal.remove(claveSegmento);
+    console.warn(
+      `No se pudo consultar el mapa de recibos en memoria temporal: ${error.message}`,
+    );
+    return "";
+  }
+}
+
+function obtenerClaveMemoriaReciboFirma_(identificadorRecibo) {
+  return `RECIBO_FIRMA_V5_${identificadorRecibo}`;
+}
+
+function reciboPuedeConservarseParaFirma_(recibo) {
+  return [ESTADOS_RECIBO.PENDIENTE_FIRMA, ESTADOS_RECIBO.ERROR_PDF].includes(
+    recibo?.estado,
+  );
+}
+
+function guardarRecibosFirmaEnMemoria_(recibos) {
+  const valores = {};
+  (Array.isArray(recibos) ? recibos : [recibos]).forEach((recibo) => {
+    if (!recibo?.identificadorRecibo || !reciboPuedeConservarseParaFirma_(recibo)) {
+      return;
+    }
+    const contenido = JSON.stringify(recibo);
+    if (Utilities.newBlob(contenido).getBytes().length <= 95 * 1024) {
+      valores[obtenerClaveMemoriaReciboFirma_(recibo.identificadorRecibo)] =
+        contenido;
+    }
+  });
+  if (!Object.keys(valores).length) return false;
+
+  try {
+    CacheService.getScriptCache().putAll(valores, 600);
+    return true;
+  } catch (error) {
+    console.warn(
+      `No se pudieron conservar los recibos para firma en memoria temporal: ${error.message}`,
+    );
+    return false;
+  }
+}
+
+function obtenerReciboFirmaDeMemoria_(identificadorRecibo) {
+  const memoriaTemporal = CacheService.getScriptCache();
+  const clave = obtenerClaveMemoriaReciboFirma_(identificadorRecibo);
+  try {
+    const contenido = memoriaTemporal.get(clave);
+    if (!contenido) return null;
+    const recibo = JSON.parse(contenido);
+    if (!reciboPuedeConservarseParaFirma_(recibo)) {
+      memoriaTemporal.remove(clave);
+      return null;
+    }
+    return recibo;
+  } catch (error) {
+    memoriaTemporal.remove(clave);
+    console.warn(
+      `No se pudo consultar el recibo para firma en memoria temporal: ${error.message}`,
+    );
+    return null;
+  }
+}
+
+function invalidarReciboFirmaEnMemoria_(identificadorRecibo) {
+  try {
+    CacheService.getScriptCache().remove(
+      obtenerClaveMemoriaReciboFirma_(identificadorRecibo),
+    );
+  } catch (error) {
+    console.warn(
+      `No se pudo invalidar el recibo para firma en memoria temporal: ${error.message}`,
+    );
+  }
 }
 
 function construirResumenRecibos_(recibos) {
@@ -230,6 +399,7 @@ function actualizarMemoriaTemporalRecibos_(recibosIndice) {
       600,
     );
     guardarEstadoRecibosOperacionEnMemoria_(estado);
+    guardarMapaArchivosRecibosEnMemoria_(recibosIndice);
   } catch (error) {
     invalidarMemoriaTemporalResumenRecibos_();
     console.warn(`No se pudo actualizar la memoria temporal de recibos: ${error.message}`);
@@ -428,6 +598,7 @@ function crearRecibosMasivo(datosLote) {
         { compacto: true },
       );
       actualizarIndiceRecibosConRecuperacion_(nuevosRecibos, archivo.getId());
+      guardarRecibosFirmaEnMemoria_(nuevosRecibos);
 
       return crearRespuestaExitosa_(
         { recibos: nuevosRecibos, cantidad: nuevosRecibos.length },
@@ -539,6 +710,8 @@ function eliminarReciboNoEnviado(identificadorRecibo) {
         `No fue posible eliminar el recibo; se restauraron sus datos. ${error.message}`,
       );
     }
+
+    invalidarReciboFirmaEnMemoria_(identificadorRecibo);
 
     const limpieza = enviarArchivosReciboPapelera_(recibo);
     return crearRespuestaExitosa_(
@@ -680,21 +853,74 @@ function guardarReciboEncontrado_(resultadoBusqueda) {
     resultadoBusqueda.referencia.identificadorArchivo,
     resultadoBusqueda.indice,
   );
+  if (reciboPuedeConservarseParaFirma_(resultadoBusqueda.recibo)) {
+    guardarRecibosFirmaEnMemoria_(resultadoBusqueda.recibo);
+  } else {
+    invalidarReciboFirmaEnMemoria_(
+      resultadoBusqueda.recibo.identificadorRecibo,
+    );
+  }
+}
+
+function obtenerReciboParaVistaFirma_(identificadorRecibo) {
+  const reciboEnMemoria = obtenerReciboFirmaDeMemoria_(identificadorRecibo);
+  if (reciboEnMemoria) {
+    return { recibo: reciboEnMemoria, origen: "MEMORIA_RECIBO" };
+  }
+
+  const identificadorArchivo = obtenerIdentificadorArchivoReciboEnMemoria_(
+    identificadorRecibo,
+  );
+  if (identificadorArchivo) {
+    try {
+      const documento = leerArchivoJsonPorIdentificador_(identificadorArchivo);
+      const recibo = (documento.recibos || []).find(
+        (elemento) => elemento.identificadorRecibo === identificadorRecibo,
+      );
+      if (recibo) {
+        guardarRecibosFirmaEnMemoria_(recibo);
+        return { recibo, origen: "MAPA_ARCHIVO" };
+      }
+    } catch (error) {
+      console.warn(
+        `No se pudo utilizar la referencia rápida del recibo: ${error.message}`,
+      );
+    }
+  }
+
+  const resultado = encontrarRecibo_(identificadorRecibo);
+  guardarRecibosFirmaEnMemoria_(resultado.recibo);
+  return { recibo: resultado.recibo, origen: "INDICE" };
 }
 
 function obtenerReciboParaFirma(identificadorRecibo) {
+  const inicio = Date.now();
   try {
-    const resultado = encontrarRecibo_(identificadorRecibo);
+    const resultado = obtenerReciboParaVistaFirma_(identificadorRecibo);
+    const finLecturaRecibo = Date.now();
     const tipoRecibo = obtenerTipoReciboPorIdentificador_(
       resultado.recibo.identificadorTipoRecibo,
+    );
+    const finTipoRecibo = Date.now();
+    const logotipoUrlDatos = tipoRecibo.identificadorLogotipo
+      ? obtenerArchivoComoUrlDatos_(tipoRecibo.identificadorLogotipo)
+      : "";
+    const finLogotipo = Date.now();
+    console.info(
+      JSON.stringify({
+        evento: "RENDIMIENTO_APERTURA_FIRMA",
+        origenRecibo: resultado.origen,
+        lecturaReciboMs: finLecturaRecibo - inicio,
+        tipoReciboMs: finTipoRecibo - finLecturaRecibo,
+        logotipoMs: finLogotipo - finTipoRecibo,
+        totalMs: finLogotipo - inicio,
+      }),
     );
     return crearRespuestaExitosa_({
       recibo: resultado.recibo,
       tipoRecibo: {
         ...tipoRecibo,
-        logotipoUrlDatos: tipoRecibo.identificadorLogotipo
-          ? obtenerArchivoComoUrlDatos_(tipoRecibo.identificadorLogotipo)
-          : "",
+        logotipoUrlDatos,
       },
     });
   } catch (error) {

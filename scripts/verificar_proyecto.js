@@ -380,7 +380,33 @@ if (
     "persistencia: el índice y los documentos operativos deben conservar su serialización compacta.",
   );
 }
+if (
+  !repositorioRecibos.includes("function obtenerReciboParaVistaFirma_(") ||
+  !repositorioRecibos.includes("CLAVES_MEMORIA_TEMPORAL.MAPA_ARCHIVOS_RECIBOS") ||
+  !repositorioRecibos.includes("guardarRecibosFirmaEnMemoria_(nuevosRecibos);") ||
+  !repositorioRecibos.includes('evento: "RENDIMIENTO_APERTURA_FIRMA"') ||
+  !almacenamientoDrive.includes("IMAGEN_URL_DATOS_V5_") ||
+  !almacenamientoDrive.includes("memoriaTemporal.put(claveMemoriaTemporal, urlDatos, 21600)")
+) {
+  errores.push(
+    "apertura de firma: el recibo, su archivo mensual, el tipo y el logotipo deben utilizar cachés descartables y métricas internas.",
+  );
+}
 try {
+  const valoresMemoriaTemporalSimulada = new Map();
+  let lecturasArchivoMensualSimuladas = 0;
+  let reciboMensualSimulado = null;
+  const memoriaTemporalSimulada = {
+    get: (clave) => valoresMemoriaTemporalSimulada.get(clave) || null,
+    put: (clave, valor) => valoresMemoriaTemporalSimulada.set(clave, valor),
+    putAll: (valores) =>
+      Object.entries(valores).forEach(([clave, valor]) =>
+        valoresMemoriaTemporalSimulada.set(clave, valor),
+      ),
+    remove: (clave) => valoresMemoriaTemporalSimulada.delete(clave),
+    removeAll: (claves) =>
+      claves.forEach((clave) => valoresMemoriaTemporalSimulada.delete(clave)),
+  };
   const contextoPruebaRecibos = {
     ESTADOS_RECIBO: {
       PENDIENTE_FIRMA: "PENDIENTE_FIRMA",
@@ -388,6 +414,23 @@ try {
       ENVIADO: "ENVIADO",
       ERROR_PDF: "ERROR_PDF",
       ERROR_ENVIO: "ERROR_ENVIO",
+    },
+    CLAVES_MEMORIA_TEMPORAL: {
+      RESUMEN_RECIBOS: "RESUMEN_RECIBOS_V5",
+      ESTADO_RECIBOS_OPERACION: "ESTADO_RECIBOS_OPERACION_V5",
+      MAPA_ARCHIVOS_RECIBOS: "MAPA_ARCHIVOS_RECIBOS_V5",
+    },
+    CacheService: {
+      getScriptCache: () => memoriaTemporalSimulada,
+    },
+    Utilities: {
+      newBlob: (contenido) => ({
+        getBytes: () => Buffer.from(String(contenido)),
+      }),
+    },
+    leerArchivoJsonPorIdentificador_: () => {
+      lecturasArchivoMensualSimuladas += 1;
+      return { recibos: [reciboMensualSimulado] };
     },
     normalizarTextoMayusculas_: (valor) => String(valor || "").toUpperCase(),
     console,
@@ -422,9 +465,25 @@ try {
     identificadorPdf: "pdf-privado",
     destinatarios: ["correo@example.com"],
   };
+  reciboMensualSimulado = reciboCompleto;
   const reciboIndice = contextoPruebaRecibos.convertirReciboEnIndice_(
     reciboCompleto,
     "archivo-mensual",
+  );
+  const mapaArchivos = contextoPruebaRecibos.construirMapaArchivosRecibos_(
+    recibosSimulados,
+  );
+  contextoPruebaRecibos.guardarMapaArchivosRecibosEnMemoria_(recibosSimulados);
+  contextoPruebaRecibos.guardarRecibosFirmaEnMemoria_(reciboCompleto);
+  const lecturaDesdeReciboEnMemoria =
+    contextoPruebaRecibos.obtenerReciboParaVistaFirma_(
+      reciboCompleto.identificadorRecibo,
+    );
+  contextoPruebaRecibos.invalidarReciboFirmaEnMemoria_(
+    reciboCompleto.identificadorRecibo,
+  );
+  const lecturaDesdeMapa = contextoPruebaRecibos.obtenerReciboParaVistaFirma_(
+    reciboCompleto.identificadorRecibo,
   );
   const camposIndiceEsperados = [
     "cliente",
@@ -450,7 +509,12 @@ try {
     ) ||
     JSON.stringify(Object.keys(reciboIndice).sort()) !==
       JSON.stringify(camposIndiceEsperados) ||
-    reciboIndice.identificadorArchivoDatos !== "archivo-mensual"
+    reciboIndice.identificadorArchivoDatos !== "archivo-mensual" ||
+    Object.keys(mapaArchivos).length !== 298 ||
+    mapaArchivos["identificador-297"] !== "identificador-productivo" ||
+    lecturaDesdeReciboEnMemoria.origen !== "MEMORIA_RECIBO" ||
+    lecturaDesdeMapa.origen !== "MAPA_ARCHIVO" ||
+    lecturasArchivoMensualSimuladas !== 1
   ) {
     errores.push(
       "src/repositories/recibos_drive.js: la proyección operativa simulada no respeta tamaño, conteos o privacidad.",
@@ -522,6 +586,27 @@ const repositorioConfiguracion = sistemaArchivos.readFileSync(
   rutas.join(directorioProyecto, "src", "repositories", "configuracion_drive.js"),
   "utf8",
 );
+const inicioBusquedaTipoRecibo = repositorioConfiguracion.indexOf(
+  "function obtenerTipoReciboPorIdentificador_(",
+);
+const finBusquedaTipoRecibo = repositorioConfiguracion.indexOf(
+  "function obtenerTiposReciboActivosParaOperacion_(",
+);
+const busquedaTipoRecibo = repositorioConfiguracion.slice(
+  inicioBusquedaTipoRecibo,
+  finBusquedaTipoRecibo,
+);
+if (
+  !repositorioConfiguracion.includes("TIPOS_RECIBO_COMPLETOS") ||
+  inicioBusquedaTipoRecibo < 0 ||
+  finBusquedaTipoRecibo <= inicioBusquedaTipoRecibo ||
+  !busquedaTipoRecibo.includes("obtenerTiposRecibo_()") ||
+  busquedaTipoRecibo.includes("obtenerConfiguracionCompleta_()")
+) {
+  errores.push(
+    "src/repositories/configuracion_drive.js: la firma debe consultar solamente los tipos completos, sin cargar contactos ni configuración general.",
+  );
+}
 const paginaConfiguracion = sistemaArchivos.readFileSync(
   rutas.join(directorioProyecto, "src", "views", "pages", "configuracion.html"),
   "utf8",
