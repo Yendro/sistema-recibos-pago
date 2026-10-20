@@ -42,6 +42,12 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 
 - Las mutaciones de recibos reutilizan el índice cargado durante la búsqueda y
   evitan una segunda lectura completa antes de persistir el cambio.
+- La ruta de operación habilita la captura después de cargar únicamente los
+  tipos de recibo; resumen, pendientes e historial se resuelven en segundo
+  plano y los contactos se consultan al abrir el diálogo de envío.
+- El estado operativo utiliza una proyección compacta en caché que se actualiza
+  junto con cada escritura del índice, sin convertir la caché en fuente de
+  verdad.
 - Las dependencias se crean dentro de la carpeta que contiene el proyecto de
   Apps Script; las instalaciones existentes se mueven sin cambiar sus IDs.
 - Captura, pendientes de firma, historial y correo comparten la ruta

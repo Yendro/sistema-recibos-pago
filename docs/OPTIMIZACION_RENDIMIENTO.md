@@ -43,6 +43,31 @@ mantiene sin cambios:
 - La recuperación mediante reconstrucción del índice.
 - El reporte, el PDF y el correo.
 
+## Segunda implementación: carga progresiva
+
+La apertura de Operación ya no espera una respuesta monolítica. El flujo se
+divide en tres consultas según la necesidad real de la interfaz:
+
+1. **Arranque:** comprueba la instalación y obtiene únicamente los tipos de
+   recibo activos. La captura se habilita después de esta respuesta.
+2. **Estado de recibos:** carga en segundo plano el resumen, los pendientes y la
+   primera página del historial.
+3. **Contactos:** se consultan solamente cuando se abre el diálogo de envío.
+
+El estado operativo utiliza una proyección de ocho campos por recibo, suficiente
+para las listas y acciones visibles. No transmite al navegador identificadores
+de archivos mensuales, firma, fotografía, destinatarios ni otros campos que
+solo requiere el servidor.
+
+La proyección se conserva durante diez minutos en `CacheService` cuando ocupa
+menos de 95 KB. Cada escritura del índice la vuelve a construir utilizando los
+datos que ya están en memoria; por lo tanto, crear, firmar, enviar o eliminar un
+recibo no obliga a descargar de nuevo el índice en la siguiente apertura.
+
+La caché es una aceleración y no una fuente de verdad. Si Google la expulsa o no
+está disponible, el sistema vuelve a leer `indice-recibos.json`, reconstruye la
+respuesta y continúa operando. Un fallo de caché nunca invalida una escritura.
+
 ## Validación en el entorno aislado
 
 1. Despliega la rama mediante la
@@ -63,16 +88,27 @@ mantiene sin cambios:
 6. Comprueba que el recibo mensual, el índice, el PDF y el reporte conserven el
    mismo resultado funcional.
 
+Para validar la carga progresiva con los 298 registros importados:
+
+1. Abre Operación después de desplegar y mide por separado el tiempo hasta que
+   aparece la captura y el tiempo hasta que termina el historial.
+2. Recarga la ruta dentro de los siguientes diez minutos. El estado de recibos
+   debe resolverse desde la proyección en caché.
+3. Crea un recibo de prueba y vuelve a cargar. La captura y el historial deben
+   conservar el comportamiento rápido sin esperar una lectura adicional para
+   reconstruir la caché.
+4. Abre el diálogo de envío y confirma que los contactos se carguen en ese
+   momento, sin formar parte de la apertura inicial.
+
 ## Siguientes optimizaciones candidatas
 
 Después de medir esta implementación se evaluarán, por separado:
 
-1. Convertir el índice global en una proyección compacta.
-2. Almacenar en caché pendientes y páginas frecuentes menores de 100 KB.
-3. Guardar los identificadores de carpetas por periodo.
-4. Evitar la actualización de Sheets durante la firma si el reporte solo debe
+1. Almacenar en caché páginas de historial solicitadas repetidamente.
+2. Guardar los identificadores de carpetas por periodo.
+3. Evitar la actualización de Sheets durante la firma si el reporte solo debe
    contener recibos enviados.
-5. Reducir el alcance del bloqueo global durante la conversión del PDF.
+4. Reducir el alcance del bloqueo global durante la conversión del PDF.
 
 No se aplicarán todas simultáneamente: cada cambio debe medirse y conservar una
 ruta de reversión clara.
