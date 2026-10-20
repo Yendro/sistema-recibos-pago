@@ -122,7 +122,7 @@ No se necesitan triggers ni un proyecto vinculado a Sheets.
 1. Abre **Implementar > Nueva implementación** en Apps Script.
 2. Selecciona **Aplicación web**.
 3. Configura **Ejecutar como: yo**.
-4. Configura el acceso para la cuenta propietaria.
+4. Configura **Quién tiene acceso: cualquier usuario con una cuenta de Google**.
 5. Implementa y conserva la URL terminada en `/exec`.
 
 Rutas disponibles:
@@ -136,7 +136,8 @@ URL_IMPLEMENTACION/exec?ruta=configuracion
 
 Inicio es también la ruta predeterminada cuando no se proporciona un parámetro.
 Las tres rutas pueden insertarse como páginas de ancho completo en Google Sites.
-El Site y la Web App deben permanecer restringidos a la cuenta autorizada.
+El Site se comparte únicamente con sus usuarios operativos y la Web App exige
+que cada visitante mantenga una sesión de Google iniciada.
 
 ## Primera configuración
 
@@ -215,8 +216,11 @@ src/
 
 ## Seguridad y límites
 
-- La Web App se ejecuta como la cuenta que la implementa y el manifiesto limita
-  el acceso a esa cuenta.
+- La Web App se ejecuta como la cuenta que la implementa y acepta usuarios con
+  sesión de Google iniciada mediante `ANYONE`. No se utiliza acceso anónimo.
+- Google Sites no transfiere sus permisos al contenido insertado. La URL de la
+  Web App debe tratarse como información interna porque cualquier usuario con
+  cuenta de Google que la obtenga podría abrirla.
 - Fotografías, firmas y recibos contienen información sensible y deben conservar
   permisos privados en Drive.
 - Sheets es un reporte derivado; la fuente operativa son los JSON de Drive.

@@ -113,9 +113,12 @@ directorioRaizEnContenedor: true
 
 1. Abre **Implementar > Administrar implementaciones**.
 2. Edita la implementación productiva existente.
-3. Selecciona **Nueva versión** y confirma.
-4. Comprueba que la URL `/exec` se conserve.
-5. Si se crea una implementación diferente, actualiza las inserciones de
+3. Comprueba **Ejecutar como: yo**.
+4. Comprueba **Quién tiene acceso: cualquier usuario con una cuenta de
+   Google**. No selecciones acceso anónimo.
+5. Selecciona **Nueva versión** y confirma.
+6. Comprueba que la URL `/exec` se conserve.
+7. Si se crea una implementación diferente, actualiza las inserciones de
    Google Sites:
 
    ```text
@@ -127,6 +130,12 @@ directorioRaizEnContenedor: true
 El workflow reutiliza el identificador del deployment y conserva la URL
 productiva. Una vez validada su ejecución manual se podrá habilitar el disparador
 automático para cambios desplegables integrados en `main`.
+
+Antes de probar dentro de Google Sites, abre la misma URL `/exec` en una ventana
+privada e inicia sesión con una cuenta invitada. Si la URL directa funciona pero
+el elemento insertado no, elimina la inserción anterior del Site y vuelve a
+insertar la URL exacta del deployment versionado; no utilices `/dev`, el
+identificador del proyecto ni el deployment `@HEAD`.
 
 ## 5. Prueba de humo productiva
 

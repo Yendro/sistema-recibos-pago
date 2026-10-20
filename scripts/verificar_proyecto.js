@@ -213,8 +213,10 @@ archivosAplicacion.forEach((rutaArchivo) => {
 const manifiesto = JSON.parse(
   sistemaArchivos.readFileSync(rutas.join(directorioProyecto, "appsscript.json"), "utf8"),
 );
-if (manifiesto.webapp?.access !== "MYSELF") {
-  errores.push("appsscript.json: la aplicación web debe conservar acceso MYSELF.");
+if (manifiesto.webapp?.access !== "ANYONE") {
+  errores.push(
+    "appsscript.json: la aplicación web debe permitir acceso a usuarios con sesión de Google mediante ANYONE.",
+  );
 }
 if (manifiesto.webapp?.executeAs !== "USER_DEPLOYING") {
   errores.push("appsscript.json: la aplicación web debe ejecutarse como USER_DEPLOYING.");
