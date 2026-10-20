@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$RutaProyectoPruebas = ".clasp.pruebas.json",
+  [string]$RutaIgnoradosPruebas = ".claspignore.pruebas",
   [string]$RutaEstadoDespliegue = ".despliegue-pruebas.json",
   [switch]$PermitirCambiosSinCommit
 )
@@ -48,7 +49,12 @@ try {
   $rutaProyectoPruebasAbsoluta = (
     Resolve-Path -LiteralPath $RutaProyectoPruebas
   ).Path
-  $rutaIgnoradosAbsoluta = (Resolve-Path -LiteralPath ".claspignore").Path
+  if (-not (Test-Path -LiteralPath $RutaIgnoradosPruebas -PathType Leaf)) {
+    throw "No existe el archivo exclusivo de despliegue $RutaIgnoradosPruebas."
+  }
+  $rutaIgnoradosAbsoluta = (
+    Resolve-Path -LiteralPath $RutaIgnoradosPruebas
+  ).Path
 
   $proyectoPruebas = Get-Content -LiteralPath $rutaProyectoPruebasAbsoluta -Raw |
     ConvertFrom-Json

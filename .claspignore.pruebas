@@ -1,0 +1,21 @@
+# Ignore all files
+**/**
+
+# Application files
+!appsscript.json
+!**/*.gs
+!**/*.js
+!**/*.ts
+!**/*.html
+
+# Local development files
+.git/**
+node_modules/**
+scripts/**
+
+# Only expose the Apps Script test utilities
+tests/**
+!tests/apps_script/**
+
+# Python virtual environments
+.venv/**

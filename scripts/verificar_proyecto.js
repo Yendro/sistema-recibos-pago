@@ -32,6 +32,19 @@ archivosServidor.forEach((rutaArchivo) =>
   validarJavaScript(sistemaArchivos.readFileSync(rutaArchivo, "utf8"), rutaArchivo),
 );
 
+const directorioHerramientasPruebas = rutas.join(
+  directorioProyecto,
+  "tests",
+  "apps_script",
+);
+const archivosHerramientasPruebas = recorrerArchivos(
+  directorioHerramientasPruebas,
+  (rutaArchivo) => rutaArchivo.endsWith(".js"),
+);
+archivosHerramientasPruebas.forEach((rutaArchivo) =>
+  validarJavaScript(sistemaArchivos.readFileSync(rutaArchivo, "utf8"), rutaArchivo),
+);
+
 const funcionesPublicasPermitidas = new Set([
   "doGet",
   "inicializarSistemaPruebas",
@@ -211,6 +224,60 @@ if (paquete.devDependencies?.["@google/clasp"] !== "3.4.1") {
   errores.push("package.json: clasp debe conservar una versión exacta y reproducible.");
 }
 
+const ignoradosProduccion = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, ".claspignore"),
+  "utf8",
+);
+const ignoradosPruebas = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, ".claspignore.pruebas"),
+  "utf8",
+);
+const scriptDesplieguePruebas = sistemaArchivos.readFileSync(
+  rutas.join(directorioProyecto, "scripts", "desplegar_pruebas.ps1"),
+  "utf8",
+);
+const importadorPruebas = sistemaArchivos.readFileSync(
+  rutas.join(
+    directorioProyecto,
+    "tests",
+    "apps_script",
+    "importador_datos_produccion.js",
+  ),
+  "utf8",
+);
+if (
+  !ignoradosProduccion.includes("tests/**") ||
+  !ignoradosPruebas.includes("!tests/apps_script/**") ||
+  !scriptDesplieguePruebas.includes('".claspignore.pruebas"')
+) {
+  errores.push(
+    "despliegue de pruebas: el importador debe excluirse de producción e incluirse únicamente en pruebas.",
+  );
+}
+const contratosImportadorPruebas = [
+  'CLAVE_ENTORNO: "ENTORNO_EJECUCION"',
+  'VALOR_ENTORNO: "PRUEBAS"',
+  'VALOR_CONFIRMACION: "COPIAR_PRODUCCION_A_PRUEBAS"',
+  "contexto.propiedades.deleteProperty(",
+  "estado: ESTADOS_RECIBO.ENVIADO",
+  'identificadorFotografia: ""',
+  'identificadorFirma: ""',
+  'identificadorPdf: ""',
+  'destinatarios: []',
+  "reconstruirIndiceRecibos_()",
+  "restaurarPropiedadesImportador_(",
+];
+if (
+  contratosImportadorPruebas.some(
+    (contrato) => !importadorPruebas.includes(contrato),
+  ) ||
+  importadorPruebas.includes("obtenerContactos_()")
+) {
+  errores.push(
+    "tests/apps_script/importador_datos_produccion.js: faltan controles de aislamiento, saneamiento o recuperación.",
+  );
+}
+
 const flujoDespliegue = sistemaArchivos.readFileSync(
   rutas.join(
     directorioProyecto,
@@ -344,6 +411,8 @@ if (errores.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Verificación correcta: ${archivosServidor.length} archivos de servidor y ${archivosScriptsVista.length} scripts de interfaz.`,
+    `Verificación correcta: ${archivosServidor.length} archivos de servidor, ` +
+      `${archivosScriptsVista.length} scripts de interfaz y ` +
+      `${archivosHerramientasPruebas.length} herramienta(s) de pruebas.`,
   );
 }
