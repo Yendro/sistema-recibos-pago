@@ -18,6 +18,9 @@ function Confirmar-UltimoComandoNativo {
 }
 
 $directorioRepositorio = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$rutaManifiesto = Join-Path $directorioRepositorio "appsscript.json"
+$bytesManifiestoOriginal = $null
+$manifiestoAlterado = $false
 Push-Location $directorioRepositorio
 
 try {
@@ -81,6 +84,19 @@ try {
   & npm run verificar
   Confirmar-UltimoComandoNativo "La verificación del proyecto"
 
+  $bytesManifiestoOriginal = [System.IO.File]::ReadAllBytes($rutaManifiesto)
+  $manifiestoPruebas = Get-Content -LiteralPath $rutaManifiesto -Raw |
+    ConvertFrom-Json
+  $manifiestoPruebas.webapp.access = "MYSELF"
+  $contenidoManifiestoPruebas = $manifiestoPruebas |
+    ConvertTo-Json -Depth 20
+  [System.IO.File]::WriteAllText(
+    $rutaManifiesto,
+    $contenidoManifiestoPruebas + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+  )
+  $manifiestoAlterado = $true
+
   & npx clasp -P $rutaProyectoPruebasAbsoluta -I $rutaIgnoradosAbsoluta `
     show-file-status
   Confirmar-UltimoComandoNativo "La revisión de archivos desplegables"
@@ -130,5 +146,14 @@ try {
   Write-Host "Configuración: $direccionBase`?ruta=configuracion"
   Write-Host "Inicio:        $direccionBase`?ruta=inicio"
 } finally {
-  Pop-Location
+  try {
+    if ($manifiestoAlterado -and $null -ne $bytesManifiestoOriginal) {
+      [System.IO.File]::WriteAllBytes(
+        $rutaManifiesto,
+        $bytesManifiestoOriginal
+      )
+    }
+  } finally {
+    Pop-Location
+  }
 }

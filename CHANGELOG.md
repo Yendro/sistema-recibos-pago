@@ -51,6 +51,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - La Web App permite el acceso de usuarios con sesión de Google mediante
   `ANYONE`, conserva la ejecución como propietario y continúa rechazando acceso
   anónimo.
+- El despliegue aislado de pruebas fuerza acceso `MYSELF` sin modificar de forma
+  permanente el manifiesto utilizado por producción.
 - Las dependencias se crean dentro de la carpeta que contiene el proyecto de
   Apps Script; las instalaciones existentes se mueven sin cambiar sus IDs.
 - Captura, pendientes de firma, historial y correo comparten la ruta

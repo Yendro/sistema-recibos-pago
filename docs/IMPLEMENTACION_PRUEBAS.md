@@ -48,6 +48,8 @@ El comando realiza las siguientes protecciones:
   temporal con `-PermitirCambiosSinCommit`.
 - Comprueba que el `scriptId` de pruebas sea distinto del productivo.
 - Verifica el proyecto y muestra los archivos desplegables.
+- Cambia el acceso del manifiesto a `MYSELF` únicamente durante la
+  sincronización y restaura el archivo local aunque falle el despliegue.
 - Sincroniza exclusivamente el proyecto definido en `.clasp.pruebas.json`.
 - Incluye las herramientas de `tests/apps_script` mediante un archivo de
   exclusión exclusivo; el despliegue productivo continúa omitiéndolas.
@@ -106,8 +108,8 @@ hoja.
 
 ## 4. Crear el despliegue web
 
-La primera ejecución de `npm run desplegar:pruebas` crea el deployment con la
-configuración declarada en `appsscript.json`:
+La primera ejecución de `npm run desplegar:pruebas` crea el deployment con una
+variante privada del manifiesto productivo:
 
 - Ejecutar como: **usuario que implementa**.
 - Acceso: **solo yo**.
@@ -115,8 +117,10 @@ configuración declarada en `appsscript.json`:
 Las siguientes ejecuciones crean una versión y actualizan el mismo deployment,
 por lo que la URL terminada en `/exec` permanece estable.
 
-El manifiesto también declara acceso `MYSELF`. Las páginas solo funcionarán en
-dispositivos donde la cuenta propietaria tenga una sesión iniciada.
+El repositorio conserva `ANYONE` para producción. El comando reemplaza ese valor
+temporalmente por `MYSELF` al publicar pruebas y restaura los bytes originales
+antes de terminar. Las páginas de pruebas solo funcionarán en dispositivos
+donde la cuenta propietaria tenga una sesión iniciada.
 
 ## 5. Validar las rutas directamente
 

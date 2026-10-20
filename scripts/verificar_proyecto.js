@@ -259,6 +259,14 @@ if (
     "despliegue de pruebas: el importador debe excluirse de producción e incluirse únicamente en pruebas.",
   );
 }
+if (
+  !scriptDesplieguePruebas.includes('$manifiestoPruebas.webapp.access = "MYSELF"') ||
+  !scriptDesplieguePruebas.includes("[System.IO.File]::WriteAllBytes(")
+) {
+  errores.push(
+    "despliegue de pruebas: debe restringir el manifiesto a MYSELF y restaurar su contenido original.",
+  );
+}
 const contratosImportadorPruebas = [
   'CLAVE_ENTORNO: "ENTORNO_EJECUCION"',
   'VALOR_ENTORNO: "PRUEBAS"',
