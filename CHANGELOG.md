@@ -51,6 +51,13 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
 - El índice derivado conserva solo los campos requeridos para localizar, contar
   y listar recibos; los documentos operativos se serializan sin sangría para
   reducir el volumen transferido a Drive.
+- La apertura de firma utiliza primero el recibo pendiente en caché y después un
+  mapa compacto hacia su archivo mensual, evitando descargar el índice completo
+  para cada recibo recién creado.
+- La consulta de firma conserva temporalmente los tipos completos y los
+  logotipos pequeños, sin cargar contactos ni la configuración general.
+- Las ejecuciones registran tiempos separados de lectura del recibo, tipo y
+  logotipo para medir el rendimiento sin incluir datos personales.
 - La Web App permite el acceso de usuarios con sesión de Google mediante
   `ANYONE`, conserva la ejecución como propietario y continúa rechazando acceso
   anónimo.

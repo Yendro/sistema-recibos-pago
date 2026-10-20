@@ -22,6 +22,12 @@ El volumen no justifica por sí solo esperas superiores a cinco segundos. El
 costo principal proviene de llamadas consecutivas a Drive y Sheets, así como de
 la lectura y sobrescritura completa de los documentos JSON.
 
+Después de reconstruir el índice con la versión de estructura 5, la misma
+muestra ocupa aproximadamente 106 KB. La reducción observada es cercana al 70%,
+pero el documento todavía supera el límite seguro de 95 KB definido para una
+entrada de `CacheService`; por ello no se intenta conservar el índice completo
+en una sola clave.
+
 ## Primera implementación
 
 Al localizar un recibo, el repositorio ya necesita leer el índice para obtener
@@ -92,6 +98,51 @@ Después de desplegar esta implementación debe ejecutarse nuevamente
 recursos existentes y reconstruye el índice compacto a partir de los archivos
 mensuales ya importados.
 
+## Cuarta implementación: apertura de firma por niveles
+
+La preparación de la firma ya no necesita recorrer siempre el índice y los
+documentos de configuración. La consulta utiliza los siguientes niveles, en
+este orden:
+
+1. **Recibo pendiente:** cada recibo recién creado se conserva durante diez
+   minutos en una clave individual. Abrirlo para firmar no requiere volver a
+   leer el índice ni el archivo mensual.
+2. **Mapa de archivos:** se conserva durante hasta seis horas una relación
+   compacta entre el identificador del recibo y su archivo mensual. El mapa se
+   divide en 16 segmentos para no depender de una sola entrada de 100 KB y para
+   mantener el mismo acceso conforme crezca el historial. Si el recibo
+   individual ya no está en memoria, solo se descarga su archivo mensual.
+3. **Fuente de verdad:** si Google expulsa la caché, el sistema utiliza el flujo
+   anterior, lee el índice y localiza el recibo sin perder funcionalidad.
+
+Los tipos de recibo completos también se conservan hasta seis horas y se
+invalidan inmediatamente al modificar la configuración. Los logotipos menores
+de 95 KB se conservan como URL de datos durante el mismo periodo. Un logotipo
+mayor continúa leyéndose desde Drive para respetar el límite de tamaño por clave
+de `CacheService`.
+
+La caché individual solo admite recibos en estado `PENDIENTE_FIRMA` o
+`ERROR_PDF`. Se actualiza si falla la generación y se elimina al firmar, enviar
+o borrar el recibo. Los archivos JSON mensuales siguen siendo la fuente de
+verdad y las operaciones de escritura conservan los bloqueos existentes.
+
+Cada llamada a `obtenerReciboParaFirma` registra un evento
+`RENDIMIENTO_APERTURA_FIRMA` en **Ejecuciones** de Apps Script. El evento no
+incluye folio, cliente, concepto ni identificadores; únicamente informa:
+
+- `origenRecibo`: `MEMORIA_RECIBO`, `MAPA_ARCHIVO` o `INDICE`.
+- `lecturaReciboMs`: tiempo dedicado a localizar el recibo.
+- `tipoReciboMs`: tiempo de lectura de su configuración.
+- `logotipoMs`: tiempo de preparación del logotipo.
+- `totalMs`: duración del trabajo del servidor antes de responder.
+
+Como objetivo práctico para este volumen, una apertura desde memoria debería
+resolverse en menos de 1.5 segundos y una apertura fría entre 2 y 3 segundos.
+Son objetivos de medición del proyecto, no garantías de Google: el arranque en
+frío de Apps Script y la red todavía pueden añadir variación. La generación del
+PDF realiza escrituras, conversión y validación de imágenes; entre 4 y 8
+segundos se considera un resultado saludable para esta arquitectura.
+
 ## Validación en el entorno aislado
 
 1. Despliega la rama mediante la
@@ -125,15 +176,34 @@ Para validar la carga progresiva con los 298 registros importados:
 5. Abre el diálogo de envío y confirma que los contactos se carguen en ese
    momento, sin formar parte de la apertura inicial.
 
+Para validar la apertura optimizada:
+
+1. No vuelvas a ejecutar el inicializador; esta implementación no cambia la
+   estructura persistida.
+2. Crea un lote de cuatro recibos y abre cada uno una sola vez. En
+   **Ejecuciones**, los cuatro eventos deben indicar
+   `origenRecibo: MEMORIA_RECIBO`.
+3. Cierra y vuelve a abrir uno dentro de diez minutos. Debe conservar el mismo
+   origen y no realizar lecturas del índice o del archivo mensual.
+4. Después de que expire la caché individual, abre un pendiente existente. Si
+   el mapa continúa disponible, el evento debe indicar `MAPA_ARCHIVO`.
+5. Compara `lecturaReciboMs`, `tipoReciboMs`, `logotipoMs` y `totalMs` en al
+   menos cinco aperturas. Esto permite identificar si la espera restante es del
+   servidor o del renderizado en la tableta.
+6. Firma uno de los recibos y confirma que el PDF, el índice, el archivo mensual
+   y el reporte conserven el mismo resultado funcional.
+
 ## Siguientes optimizaciones candidatas
 
 Después de medir esta implementación se evaluarán, por separado:
 
 1. Almacenar en caché páginas de historial solicitadas repetidamente.
 2. Guardar los identificadores de carpetas por periodo.
-3. Evitar la actualización de Sheets durante la firma si el reporte solo debe
+3. Dividir en fragmentos la caché de logotipos únicamente si las métricas
+   demuestran que sus archivos superan 95 KB y dominan la apertura.
+4. Evitar la actualización de Sheets durante la firma si el reporte solo debe
    contener recibos enviados.
-4. Reducir el alcance del bloqueo global durante la conversión del PDF.
+5. Reducir el alcance del bloqueo global durante la conversión del PDF.
 
 No se aplicarán todas simultáneamente: cada cambio debe medirse y conservar una
 ruta de reversión clara.
