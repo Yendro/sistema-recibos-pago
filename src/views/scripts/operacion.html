@@ -9,6 +9,7 @@
     contactosCargados: false,
     promesaDatosRecibos: null,
     promesaContactos: null,
+    recibosCreadosDuranteCarga: [],
   };
   let identificadorReciboFirma = "";
   let identificadorReciboCorreo = "";
@@ -102,6 +103,7 @@
       estadoOperacion.pendientes = datos.pendientes?.recibos || [];
       estadoOperacion.historial = datos.historial;
       estadoOperacion.resumen = datos.resumen;
+      reconciliarRecibosCreadosDuranteCarga();
       estadoOperacion.datosRecibosCargados = true;
       renderizarResumen();
       renderizarPendientesFirma();
@@ -130,6 +132,38 @@
     } finally {
       estadoOperacion.promesaDatosRecibos = null;
     }
+  }
+
+  function incorporarRecibosCreados(recibos, actualizarResumen) {
+    const identificadoresPendientes = new Set(
+      estadoOperacion.pendientes.map((recibo) => recibo.identificadorRecibo),
+    );
+    const recibosFaltantes = recibos.filter(
+      (recibo) => !identificadoresPendientes.has(recibo.identificadorRecibo),
+    );
+    if (recibosFaltantes.length) {
+      estadoOperacion.pendientes.unshift(...recibosFaltantes);
+      if (actualizarResumen) {
+        estadoOperacion.resumen.pendientesFirma += recibosFaltantes.length;
+      }
+    }
+    recibos.slice().reverse().forEach(actualizarReciboEnHistorial);
+  }
+
+  function reconciliarRecibosCreadosDuranteCarga() {
+    incorporarRecibosCreados(
+      estadoOperacion.recibosCreadosDuranteCarga,
+      true,
+    );
+    estadoOperacion.recibosCreadosDuranteCarga = [];
+  }
+
+  function sincronizarIndiceRecibosEnSegundoPlano() {
+    ejecutarServidor("sincronizarIndexacionPendienteRecibos")
+      .then(exigirRespuestaExitosa)
+      .catch((error) =>
+        console.warn(`La indexación se reintentará automáticamente: ${error.message}`),
+      );
   }
 
   function cambiarSeccion(nombreSeccion) {
@@ -296,11 +330,6 @@
     const filaInvalida = filas.find((fila) => !validarFilaCaptura(fila).valida);
     if (!filas.length) return mostrarMensaje("Completa al menos un recibo.", true);
     if (filaInvalida) return mostrarMensaje("Corrige las filas marcadas antes de continuar.", true);
-    try {
-      await cargarEstadoRecibosOperacion();
-    } catch (error) {
-      return;
-    }
     mostrarCarga(true, "Creando recibos pendientes…");
     try {
       const respuesta = await ejecutarServidor("crearRecibosMasivo", {
@@ -308,16 +337,26 @@
         recibos: filas.map(({ cliente, importe, concepto, fechaPago }) => ({ cliente, importe, concepto, fechaPago })),
       });
       const datos = exigirRespuestaExitosa(respuesta);
-      estadoOperacion.pendientes.unshift(...datos.recibos);
-      estadoOperacion.resumen.pendientesFirma += datos.cantidad;
-      datos.recibos.slice().reverse().forEach(actualizarReciboEnHistorial);
+      if (!estadoOperacion.datosRecibosCargados) {
+        estadoOperacion.recibosCreadosDuranteCarga.push(...datos.recibos);
+      }
+      incorporarRecibosCreados(
+        datos.recibos,
+        estadoOperacion.datosRecibosCargados,
+      );
       document.getElementById("filasCaptura").replaceChildren();
       agregarFilaCaptura();
-      renderizarResumen();
+      if (estadoOperacion.datosRecibosCargados) renderizarResumen();
       renderizarPendientesFirma();
       renderizarHistorial();
       mostrarMensaje(respuesta.mensaje);
-      cambiarSeccion("firmas");
+      sincronizarIndiceRecibosEnSegundoPlano();
+      if (datos.cantidad === 1) {
+        cambiarSeccion("firmas");
+        await abrirReciboFirma(datos.recibos[0].identificadorRecibo);
+      } else {
+        cambiarSeccion("firmas");
+      }
     } catch (error) {
       mostrarMensaje(error.message, true);
     } finally {

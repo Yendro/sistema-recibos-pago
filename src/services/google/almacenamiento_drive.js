@@ -120,13 +120,15 @@ function leerArchivoJsonPorPropiedad_(clavePropiedad) {
 }
 
 function leerArchivoJsonPorIdentificador_(identificadorArchivo) {
-  const contenido = DriveApp.getFileById(identificadorArchivo)
-    .getBlob()
-    .getDataAsString("UTF-8");
+  return leerArchivoJson_(DriveApp.getFileById(identificadorArchivo));
+}
+
+function leerArchivoJson_(archivo) {
+  const contenido = archivo.getBlob().getDataAsString("UTF-8");
   try {
     return JSON.parse(contenido);
   } catch (error) {
-    throw new Error(`El archivo JSON ${identificadorArchivo} está dañado.`);
+    throw new Error(`El archivo JSON ${archivo.getId()} está dañado.`);
   }
 }
 
@@ -149,8 +151,16 @@ function guardarArchivoJsonPorIdentificador_(
   contenido,
   opciones,
 ) {
+  guardarArchivoJson_(
+    DriveApp.getFileById(identificadorArchivo),
+    contenido,
+    opciones,
+  );
+}
+
+function guardarArchivoJson_(archivo, contenido, opciones) {
   const sangria = opciones?.compacto ? undefined : 2;
-  DriveApp.getFileById(identificadorArchivo).setContent(
+  archivo.setContent(
     JSON.stringify(contenido, null, sangria),
   );
 }

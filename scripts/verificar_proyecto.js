@@ -61,6 +61,7 @@ const funcionesPublicasPermitidas = new Set([
   "eliminarContacto",
   "eliminarContactosMasivos",
   "crearRecibosMasivo",
+  "sincronizarIndexacionPendienteRecibos",
   "listarRecibos",
   "eliminarReciboNoEnviado",
   "obtenerReciboParaFirma",
@@ -392,8 +393,33 @@ if (
     "apertura de firma: el recibo, su archivo mensual, el tipo y el logotipo deben utilizar cachés descartables y métricas internas.",
   );
 }
+const inicioCreacionRecibos = repositorioRecibos.indexOf(
+  "function crearRecibosMasivo(",
+);
+const finCreacionRecibos = repositorioRecibos.indexOf(
+  "function generarFolioSeguro_(",
+);
+const creacionRecibos = repositorioRecibos.slice(
+  inicioCreacionRecibos,
+  finCreacionRecibos,
+);
+if (
+  inicioCreacionRecibos < 0 ||
+  finCreacionRecibos <= inicioCreacionRecibos ||
+  !creacionRecibos.includes("registrarIndexacionPendienteRecibos_(") ||
+  !creacionRecibos.includes("guardarArchivoJson_(archivo, documento") ||
+  !creacionRecibos.includes('evento: "RENDIMIENTO_CREACION_RECIBOS"') ||
+  creacionRecibos.includes("actualizarIndiceRecibosConRecuperacion_(") ||
+  !repositorioRecibos.includes("function sincronizarIndexacionPendienteRecibos()") ||
+  !repositorioRecibos.includes('evento: "RENDIMIENTO_INDEXACION_RECIBOS"')
+) {
+  errores.push(
+    "creación: el archivo mensual debe confirmarse antes de indexar en segundo plano mediante una cola recuperable.",
+  );
+}
 try {
   const valoresMemoriaTemporalSimulada = new Map();
+  const valoresPropiedadesSimuladas = {};
   let lecturasArchivoMensualSimuladas = 0;
   let reciboMensualSimulado = null;
   const memoriaTemporalSimulada = {
@@ -420,6 +446,9 @@ try {
       ESTADO_RECIBOS_OPERACION: "ESTADO_RECIBOS_OPERACION_V5",
       MAPA_ARCHIVOS_RECIBOS: "MAPA_ARCHIVOS_RECIBOS_V5",
     },
+    CLAVES_PROPIEDADES: {
+      COLA_INDEXACION_RECIBOS: "COLA_INDEXACION_RECIBOS",
+    },
     CacheService: {
       getScriptCache: () => memoriaTemporalSimulada,
     },
@@ -427,13 +456,31 @@ try {
       newBlob: (contenido) => ({
         getBytes: () => Buffer.from(String(contenido)),
       }),
+      formatDate: () => "20261020123456",
+    },
+    Session: {
+      getScriptTimeZone: () => "America/Mexico_City",
     },
     leerArchivoJsonPorIdentificador_: () => {
       lecturasArchivoMensualSimuladas += 1;
       return { recibos: [reciboMensualSimulado] };
     },
+    obtenerPropiedadesSistema_: () => ({
+      getProperties: () => ({ ...valoresPropiedadesSimuladas }),
+      getProperty: (clave) => valoresPropiedadesSimuladas[clave] || null,
+      setProperty: (clave, valor) => {
+        valoresPropiedadesSimuladas[clave] = valor;
+      },
+      setProperties: (valores) =>
+        Object.assign(valoresPropiedadesSimuladas, valores),
+    }),
     normalizarTextoMayusculas_: (valor) => String(valor || "").toUpperCase(),
-    console,
+    console: {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: () => {},
+    },
   };
   maquinaVirtual.createContext(contextoPruebaRecibos);
   maquinaVirtual.runInContext(repositorioRecibos, contextoPruebaRecibos);
@@ -473,6 +520,17 @@ try {
   const mapaArchivos = contextoPruebaRecibos.construirMapaArchivosRecibos_(
     recibosSimulados,
   );
+  contextoPruebaRecibos.registrarIndexacionPendienteRecibos_(
+    [reciboCompleto],
+    "archivo-mensual",
+  );
+  const indexacionesPendientes =
+    contextoPruebaRecibos.obtenerIndexacionesPendientes_();
+  const foliosSimulados = contextoPruebaRecibos.generarFoliosSeguros_(
+    "REC",
+    new Date(),
+    4,
+  );
   contextoPruebaRecibos.guardarMapaArchivosRecibosEnMemoria_(recibosSimulados);
   contextoPruebaRecibos.guardarRecibosFirmaEnMemoria_(reciboCompleto);
   const lecturaDesdeReciboEnMemoria =
@@ -485,6 +543,50 @@ try {
   const lecturaDesdeMapa = contextoPruebaRecibos.obtenerReciboParaVistaFirma_(
     reciboCompleto.identificadorRecibo,
   );
+  let recibosIndexadosSimulados = [];
+  contextoPruebaRecibos.LockService = {
+    getScriptLock: () => {
+      let bloqueoActivo = false;
+      return {
+        waitLock: () => {
+          bloqueoActivo = true;
+        },
+        hasLock: () => bloqueoActivo,
+        releaseLock: () => {
+          bloqueoActivo = false;
+        },
+      };
+    },
+  };
+  contextoPruebaRecibos.leerIndiceRecibos_ = () => ({
+    documento: { version: 1, recibos: [] },
+    recibos: [],
+  });
+  contextoPruebaRecibos.actualizarIndiceRecibosCargado_ = (
+    indice,
+    recibos,
+  ) => {
+    recibosIndexadosSimulados = recibos;
+  };
+  const resultadoIndexacion =
+    contextoPruebaRecibos.sincronizarIndexacionPendienteRecibos_();
+  const colaDespuesDeIndexar =
+    contextoPruebaRecibos.obtenerIndexacionesPendientes_();
+  contextoPruebaRecibos.registrarIndexacionPendienteRecibos_(
+    [reciboCompleto],
+    "archivo-mensual",
+  );
+  contextoPruebaRecibos.actualizarIndiceRecibosCargado_ = () => {
+    throw new Error("Fallo simulado del índice.");
+  };
+  let falloIndexacionDetectado = false;
+  try {
+    contextoPruebaRecibos.sincronizarIndexacionPendienteRecibos_();
+  } catch (error) {
+    falloIndexacionDetectado = true;
+  }
+  const colaDespuesDeFallo =
+    contextoPruebaRecibos.obtenerIndexacionesPendientes_();
   const camposIndiceEsperados = [
     "cliente",
     "concepto",
@@ -514,7 +616,19 @@ try {
     mapaArchivos["identificador-297"] !== "identificador-productivo" ||
     lecturaDesdeReciboEnMemoria.origen !== "MEMORIA_RECIBO" ||
     lecturaDesdeMapa.origen !== "MAPA_ARCHIVO" ||
-    lecturasArchivoMensualSimuladas !== 1
+    lecturasArchivoMensualSimuladas !== 3 ||
+    indexacionesPendientes.length !== 1 ||
+    indexacionesPendientes[0].identificadorRecibo !==
+      reciboCompleto.identificadorRecibo ||
+    indexacionesPendientes[0].identificadorArchivo !== "archivo-mensual" ||
+    foliosSimulados.length !== 4 ||
+    !foliosSimulados[0].endsWith("-01") ||
+    !foliosSimulados[3].endsWith("-04") ||
+    resultadoIndexacion.cantidadIndexada !== 1 ||
+    recibosIndexadosSimulados.length !== 1 ||
+    colaDespuesDeIndexar.length !== 0 ||
+    !falloIndexacionDetectado ||
+    colaDespuesDeFallo.length !== 1
   ) {
     errores.push(
       "src/repositories/recibos_drive.js: la proyección operativa simulada no respeta tamaño, conteos o privacidad.",
@@ -580,6 +694,27 @@ if (
   !interfazOperacion.includes('crearElementoTexto("strong", recibo.concepto')
 ) {
   errores.push("src/views/scripts/operacion.html: el pegado y los pendientes deben priorizar el concepto.");
+}
+const inicioCreacionInterfaz = interfazOperacion.indexOf(
+  "async function crearRecibosCapturados()",
+);
+const finCreacionInterfaz = interfazOperacion.indexOf(
+  "function renderizarResumen()",
+);
+const creacionInterfaz = interfazOperacion.slice(
+  inicioCreacionInterfaz,
+  finCreacionInterfaz,
+);
+if (
+  inicioCreacionInterfaz < 0 ||
+  finCreacionInterfaz <= inicioCreacionInterfaz ||
+  creacionInterfaz.includes("await cargarEstadoRecibosOperacion()") ||
+  !creacionInterfaz.includes("sincronizarIndiceRecibosEnSegundoPlano();") ||
+  !creacionInterfaz.includes("await abrirReciboFirma(")
+) {
+  errores.push(
+    "src/views/scripts/operacion.html: la creación no debe esperar el historial y un recibo individual debe abrirse directamente para firma.",
+  );
 }
 
 const repositorioConfiguracion = sistemaArchivos.readFileSync(
