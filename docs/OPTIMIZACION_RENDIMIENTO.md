@@ -143,6 +143,50 @@ frío de Apps Script y la red todavía pueden añadir variación. La generación
 PDF realiza escrituras, conversión y validación de imágenes; entre 4 y 8
 segundos se considera un resultado saludable para esta arquitectura.
 
+## Quinta implementación: creación con indexación diferida
+
+La creación de un lote realizaba dos lecturas y dos escrituras remotas antes de
+responder: archivo mensual e índice general. Ese costo era casi idéntico para un
+recibo y para varios, por lo que una captura individual también podía tardar
+alrededor de seis segundos.
+
+La ruta crítica ahora realiza:
+
+1. Validación y generación de folios en lote.
+2. Registro duradero de la indexación pendiente en propiedades del script.
+3. Una lectura y una escritura del archivo mensual.
+4. Conservación temporal de los recibos para su apertura inmediata.
+5. Respuesta a la interfaz.
+
+Después de responder, el navegador solicita la consolidación del índice sin
+bloquear al usuario. La cola se divide en 16 propiedades y conserva únicamente
+la relación recibo–archivo mensual. No contiene clientes, conceptos, importes ni
+otros datos del recibo. El consolidador vuelve a leer el recibo actual desde el
+archivo mensual, actualiza el índice una sola vez por lote y vacía la cola
+solamente después de terminar correctamente.
+
+Si la tableta se cierra, se pierde la conexión o falla la segunda llamada, la
+cola permanece en `PropertiesService`. La siguiente carga del estado o consulta
+del historial vuelve a intentar la consolidación. El archivo mensual sigue
+siendo la fuente de verdad; la caché no participa en la recuperación.
+
+La interfaz tampoco espera a que termine de cargar el historial para permitir
+la creación. Si se captura un solo recibo, abre directamente su vista de firma;
+si se captura un lote, muestra la bandeja de pendientes como antes. Las
+respuestas concurrentes del estado inicial y de la creación se reconcilian por
+identificador para evitar duplicados o conteos dobles.
+
+Se añadieron dos eventos de diagnóstico sin información personal:
+
+- `RENDIMIENTO_CREACION_RECIBOS`: validación, espera del bloqueo, lectura y
+  escritura mensual, cola, caché y duración total visible para la interfaz.
+- `RENDIMIENTO_INDEXACION_RECIBOS`: lectura de los recibos pendientes,
+  actualización del índice, limpieza de la cola y duración total del trabajo
+  diferido.
+
+Esta implementación conserva la versión de estructura 5 y no requiere ejecutar
+otra vez el inicializador.
+
 ## Validación en el entorno aislado
 
 1. Despliega la rama mediante la
@@ -192,6 +236,22 @@ Para validar la apertura optimizada:
    servidor o del renderizado en la tableta.
 6. Firma uno de los recibos y confirma que el PDF, el índice, el archivo mensual
    y el reporte conserven el mismo resultado funcional.
+
+Para validar la creación optimizada:
+
+1. Crea un solo recibo y mide el tiempo desde que presionas **Crear recibos**
+   hasta que aparece directamente la vista de firma.
+2. En **Ejecuciones**, separa el evento `RENDIMIENTO_CREACION_RECIBOS` del evento
+   posterior `RENDIMIENTO_INDEXACION_RECIBOS`. La duración del segundo ya no
+   debe formar parte de la espera de creación.
+3. Crea un lote de cuatro recibos y confirma que los folios terminen en `01`,
+   `02`, `03` y `04` cuando comparten el mismo segundo.
+4. Confirma que los cuatro aparezcan en pendientes y en el historial después de
+   terminar la indexación.
+5. Recarga la aplicación y realiza una búsqueda para comprobar que no existan
+   duplicados y que la cola pendiente se haya reconciliado.
+6. Firma un recibo inmediatamente después de crearlo y valida que el PDF y el
+   reporte mantengan el resultado anterior.
 
 ## Siguientes optimizaciones candidatas
 

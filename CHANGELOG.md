@@ -58,6 +58,14 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/).
   logotipos pequeños, sin cargar contactos ni la configuración general.
 - Las ejecuciones registran tiempos separados de lectura del recibo, tipo y
   logotipo para medir el rendimiento sin incluir datos personales.
+- La creación confirma primero el archivo mensual y difiere la actualización
+  del índice mediante una cola duradera y recuperable en propiedades del script.
+- La aplicación reintenta automáticamente cualquier indexación pendiente al
+  cargar el estado o consultar el historial.
+- La captura ya no espera la carga del historial y abre directamente la firma
+  cuando se crea un solo recibo.
+- Los folios de un lote se reservan con una sola lectura y escritura del control
+  de secuencia.
 - La Web App permite el acceso de usuarios con sesión de Google mediante
   `ANYONE`, conserva la ejecución como propietario y continúa rechazando acceso
   anónimo.
